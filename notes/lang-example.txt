@@ -1,0 +1,17 @@
+String filePath = "file.txt";
+File file = filePath.open();
+
+func void funcName (String var1, Int var2) {
+    var1 = "";
+    return;
+}
+
+if ()
+then {}
+else if ()
+then {}
+else then {}
+
+while (!file.eof) {
+
+}
