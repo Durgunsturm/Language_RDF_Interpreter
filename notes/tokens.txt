@@ -1,0 +1,13 @@
+SELECT                              Structure of output
+()                                  Contains output structure
+WHERE                               Starts conditions
+    {}                              Contains conditions
+    .                               New condition
+    ?                               Use value as variable after it
+    UNION                           Combine two graphs
+    =
+    <
+    >
+    &&
+    ||
+    !

@@ -1,17 +1,19 @@
-String filePath = "file.txt";
-File file = filePath.open();
+SELECT (Subject Predicate Object) WHERE {
+    ?var1 value ?var2 .
 
-func void funcName (String var1, Int var2) {
-    var1 = "";
-    return;
+} 
+
+SELECT (?s <http://example.org/ont/hasAge> ?obj) WHERE {
+    ?s <http://example.org/ont/hasAge> ?obj .
+    ?obj >= 21 .
 }
 
-if ()
-then {}
-else if ()
-then {}
-else then {}
+SELECT (?s ?p ?obj) WHERE {
+    ?p = <http://example.org/ont/hasAge> .
+    ?obj >= 21 .
+}
 
-while (!file.eof) {
-
+SELECT WHERE {
+    ?p = <http://example.org/ont/hasAge> .
+    ?o >= 21 .
 }

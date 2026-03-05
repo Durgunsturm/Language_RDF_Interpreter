@@ -1,0 +1,2 @@
+--Translates turtle abbrieviations into standard form.
+--File is required to be normalised fully before querying.
