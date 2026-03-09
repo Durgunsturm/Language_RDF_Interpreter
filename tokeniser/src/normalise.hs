@@ -107,11 +107,21 @@ parseBaseOrPrefix = do
   try parseBase <|> parsePrefix
 
 
+--Checks if an object is a section or a whole
+objectIsSection :: String -> Bool
+objectIsSection "" = False --Assumes empty object is a standalone object
+objectIsSection obj = head obj == '<' && last obj == '>'
+
+stripOutside :: String -> String
+stripOutside "" = ""
+stripOutside [x] = [x]
+stripOutside xs = init . tail $ xs
+
 --Parses objects separated by ',' and returns each object value
 parseSamePred :: Parser String
 parseSamePred = do
   char ','
-  parseSection False
+  parseSection True
 
 --Recurses back to parseTripleSect to handle multiple triples with same subject
 parseDiffTriple :: String -> Parser [Triple]
@@ -121,7 +131,10 @@ parseDiffTriple subj = do
 
 --Compiles subject, prefix, predicate and object array to array of triples
 placeIntoTriples :: String -> String -> String -> [String] -> [Triple]
-placeIntoTriples subj pre pred = map (T subj pre pred . Sect)
+placeIntoTriples _ _ _ [] = []
+placeIntoTriples subj pre pred (o:objs)
+  | objectIsSection o = T subj pre pred (Sect $ stripOutside o) : placeIntoTriples subj pre pred objs
+  | otherwise = T subj pre pred (Single o) : placeIntoTriples subj pre pred objs
 
 --Parses objects separated by ';'
 parseSameName :: String -> String -> String -> String -> Parser [Triple]
@@ -140,10 +153,10 @@ parseEndLines = do
 
 
 --Loads a single object into TTLine
-parseEndLine :: Triple -> Parser [Triple]
-parseEndLine trip = do
+parseEndLine :: [Triple] -> Parser [Triple]
+parseEndLine trips = do
   char '.'
-  return [trip]
+  return trips
 
 --Parses different ways of writing the object
 parseTripleSect :: String -> Parser [Triple]
@@ -151,8 +164,8 @@ parseTripleSect subj = do
   prefix <- parsePart ':'
   char ':'
   pred <- parseSection True
-  obj <- parseSection False
-  try (parseEndLine (T subj prefix pred (Sect obj))) <|> try (parseSameName subj prefix pred obj)
+  obj <- parseSection True
+  try (parseEndLine (placeIntoTriples subj prefix pred [obj])) <|> try (parseSameName subj prefix pred obj)
 
 --Converts triple array into line data type
 handleTripleSect :: String -> Parser TTLine
