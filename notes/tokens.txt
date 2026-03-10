@@ -1,13 +1,23 @@
 SELECT                              Structure of output
+FROM                                Contains input graphs
 ()                                  Contains output structure
 WHERE                               Starts conditions
     {}                              Contains conditions
     .                               New condition
     ?                               Use value as variable after it
-    UNION                           Combine two graphs
     =
     <
     >
+
+    in                              Explicit reference to input graph
+    <=
+    >=
     &&
     ||
     !
+    //                              Comments
+
+    UNION                           Combine two graphs
+    GROUP
+    MAX
+    MIN

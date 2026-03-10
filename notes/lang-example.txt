@@ -1,19 +1,13 @@
-SELECT (Subject Predicate Object) WHERE {
-    ?var1 value ?var2 .
+?g = "input.ttl" .
 
-} 
-
-SELECT (?s <http://example.org/ont/hasAge> ?obj) WHERE {
-    ?s <http://example.org/ont/hasAge> ?obj .
-    ?obj >= 21 .
-}
-
-SELECT (?s ?p ?obj) WHERE {
+//Implicit input graph
+SELECT (?s ?p ?obj) FROM (?g) WHERE {
     ?p = <http://example.org/ont/hasAge> .
     ?obj >= 21 .
 }
 
-SELECT WHERE {
-    ?p = <http://example.org/ont/hasAge> .
-    ?o >= 21 .
+//Explicit input graphs
+SELECT (?s ?p ?obj) FROM (?g1, ?g2) WHERE {
+    ?p in ?g1 = <http://example.org/ont/hasAge> .
+    ?obj >= 21 .
 }

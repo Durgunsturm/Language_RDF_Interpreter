@@ -1,2 +1,2 @@
-<http://example.org/nmg> <http://ont.example.org/name> "Nick Gibbins" .
-<http://example.org/nmg> <http://ont.example.org/worksFor> <http://example.org/uos> .
+<http://example.org/nmg> <http://ont.example.org/teaches> <http://example.org/comp2312> .
+<http://example.org/nmg> <http://ont.example.org/teaches> <http://example.org/comp2322> .
