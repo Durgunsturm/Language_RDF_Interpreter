@@ -16,7 +16,7 @@ data Obj = Sect String | Single String deriving Show
 newtype Base = B String deriving Show --These three types exist to occasionally enforce specific line types as parameters
 data Prefix = P String String deriving Show
 data Triple = T String String String Obj deriving Show
-data TTLine = Ba Base | Pre Prefix | Comp [Triple] | Whole String deriving Show
+data TTLine = Ba Base | Pre Prefix | Comp [Triple] | Whole String | Empty deriving Show
 --Base has base URI for the file (1st line)
 --Prefix has prefix onto the base with its whole URI (2nd line)
 --Triple has subject, prefix, predicate and object (3+ line)
@@ -197,6 +197,7 @@ parseLine = do
 
 --Hands one line into the parser
 handleLine :: String -> TTLine
+handleLine "" = Empty
 handleLine xs = case parse (parseLine <* eof) "" xs of
   Left _ -> error "Parsing failed"
   Right x -> x
@@ -205,6 +206,7 @@ handleLine xs = case parse (parseLine <* eof) "" xs of
 
 unParseAllLines :: [TTLine] -> Base -> [Prefix] -> [String]
 unParseAllLines [] _ _ = []
+unParseAllLines (Empty:lines) base prefixes = "" : unParseAllLines lines base prefixes --Pushes empty lines in input to output
 unParseAllLines (Whole line:lines) base prefixes = line : unParseAllLines lines base prefixes --Add existing line to output
 unParseAllLines (Ba base:lines) _ _ = unParseAllLines lines base [] --New base block
 unParseAllLines (Pre prefix:lines) base prefixes = unParseAllLines lines base (prefix:prefixes) --New prefix block
