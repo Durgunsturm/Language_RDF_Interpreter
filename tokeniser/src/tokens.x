@@ -2,8 +2,8 @@
 module Tokens where
 }
 
--- The basic wrapper takes a string and returns a list of tokens
-%wrapper "basic"
+-- Using posn wrapper so that we can get line numbers and column numbers for each token
+%wrapper "posn"
 $digit = 0-9
 $alpha = [a-zA-Z]
 
@@ -11,48 +11,60 @@ $alpha = [a-zA-Z]
 tokens :-
     $white+ ;
     "//" [^ \n]* ;
-    "SELECT" { \s -> TokenSelect }
-    "FROM" { \s -> TokenFrom }
-    "WHERE" { \s -> TokenWhere }
-    $digit+ { \s -> TokenNumber (read s) }
-    "in" { \s -> TokenIn }
-    "&&" { \s -> TokenAnd }
-    "||" { \s -> TokenOr }
-    "<=" { \s -> TokenLessThanOrEquals }
-    ">=" { \s -> TokenGreaterThanOrEquals }
-    "!" { \s -> TokenNot }
-    "=" { \s -> TokenEquals }
-    "<" { \s -> TokenLessThan }
-    ">" { \s -> TokenGreaterThan }
-    "(" { \s -> TokenLParentheses }
-    ")" { \s -> TokenRParentheses }
-    "{" { \s -> TokenLCurly }
-    "}" { \s -> TokenRCurly }
-    "." { \s -> TokenLineEnd }
-    \? $alpha [$alpha $digit]* { \s -> TokenVar s }
-    "<" [^\>]+ ">" { \s -> TokenURI s }
+    "SELECT" { \p s -> TokenSelect p }
+    "FROM" { \p s -> TokenFrom p }
+    "WHERE" { \p s -> TokenWhere p }
+    "TO" { \p s -> TokenTo p }
+    "UNION" { \p s -> TokenUnion p }
+    "GROUP" { \p s -> TokenGroup p }
+    "MAX"   { \p s -> TokenMax p }
+    "MIN"   { \p s -> TokenMin p }
+    "," { \p s -> TokenComma p }
+    $digit+ { \p s -> TokenNumber p (read s) }
+    "in" { \p s -> TokenIn p }
+    "&&" { \p s -> TokenAnd p }
+    "||" { \p s -> TokenOr p }
+    "<=" { \p s -> TokenLessThanOrEquals p }
+    ">=" { \p s -> TokenGreaterThanOrEquals p }
+    "!" { \p s -> TokenNot p }
+    "=" { \p s -> TokenEquals p }
+    "<" { \p s -> TokenLessThan p }
+    ">" { \p s -> TokenGreaterThan p }
+    "(" { \p s -> TokenLParentheses p }
+    ")" { \p s -> TokenRParentheses p }
+    "{" { \p s -> TokenLCurly p }
+    "}" { \p s -> TokenRCurly p }
+    "." { \p s -> TokenLineEnd p }
+    \? $alpha [$alpha $digit]* { \p s -> TokenVar p s }
+    "<" [^\>]+ ">" { \p s -> TokenURI p s }
 
 -- Haskell data types    
 {
-data Token = TokenSelect
-           | TokenFrom
-           | TokenWhere
-           | TokenIn
-           | TokenAnd
-           | TokenOr
-           | TokenLessThanOrEquals
-           | TokenGreaterThanOrEquals
-           | TokenNot
-           | TokenEquals
-           | TokenLessThan
-           | TokenGreaterThan
-           | TokenLParentheses
-           | TokenRParentheses
-           | TokenLCurly
-           | TokenRCurly
-           | TokenLineEnd
-           | TokenVar String
-           | TokenURI String
-           | TokenNumber Int
+data Token = TokenSelect AlexPosn
+           | TokenFrom AlexPosn
+           | TokenWhere AlexPosn
+           | TokenTo AlexPosn
+           | TokenUnion AlexPosn
+           | TokenGroup AlexPosn
+           | TokenMax AlexPosn
+           | TokenMin AlexPosn
+           | TokenComma AlexPosn
+           | TokenNumber AlexPosn Int
+           | TokenIn AlexPosn
+           | TokenAnd AlexPosn
+           | TokenOr AlexPosn
+           | TokenLessThanOrEquals AlexPosn
+           | TokenGreaterThanOrEquals AlexPosn
+           | TokenNot AlexPosn
+           | TokenEquals AlexPosn
+           | TokenLessThan AlexPosn
+           | TokenGreaterThan AlexPosn
+           | TokenLParentheses AlexPosn
+           | TokenRParentheses AlexPosn
+           | TokenLCurly AlexPosn
+           | TokenRCurly AlexPosn
+           | TokenLineEnd AlexPosn
+           | TokenVar AlexPosn String
+           | TokenURI AlexPosn String
            deriving (Eq, Show)
 }
