@@ -1,2 +1,21 @@
 <http://example.org/nmg> <http://ont.example.org/teaches> <http://example.org/comp2312> .
 <http://example.org/nmg> <http://ont.example.org/teaches> <http://example.org/comp2322> .
+<http://example.org/nmg> <http://ont.example.org/worksFor> <http://example.org/uos> .
+<http://example.org/ech> <http://me.example.org/teaches> <http://example.org/comp1312> .
+<http://example.org/ech> <http://me.example.org/teaches> <http://example.org/comp1100> .
+<http://example.org/ech> <http://me.example.org/teaches> "Other Subjects" .
+<http://example.org/ech> <http://ont.example.org/more> <http://example.org/place> .
+<http://example.org/ech> <http://ont.example.org/more> "new place" .
+<http://example.org/ech> <http://me.example.org/places> "location" .
+
+<http://mybase.org/pme> <http://ple.mybase.org/path1> <http://mybase.org/obj1> .
+<http://mybase.org/pme> <http://ple.mybase.org/path1> <http://mybase.org/obj2> .
+<http://mybase.org/pme> <http://ple.mybase.org/path1> <http://mybase.org/obj3> .
+<http://mybase.org/pme> <http://ple.mybase.org/path1> "Misc Objects" .
+<http://mybase.org/pme> <http://net.mybase.org/out> "More Objects" .
+<http://mybase.org/pme> <http://net.mybase.org/out> <http://mybase.org/netObj> .
+<http://mybase.org/met> <http://qed/mybase.org/sat> <http://mybase.org/pow> .
+<http://mybase.org/met> <http://qed.mybase.org/olk> <http://mybase.org/nev> .
+<http://mybase.org/met> <http://ple.mybase.org/gho> "test" .
+
+<http://mybase.org/led> <http://ted.mybase.org/yut> <http://mybase.org/lot> .
