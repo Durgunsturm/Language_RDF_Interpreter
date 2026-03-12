@@ -14,6 +14,12 @@ tokens :-
     "SELECT" { \s -> TokenSelect }
     "FROM" { \s -> TokenFrom }
     "WHERE" { \s -> TokenWhere }
+    "TO" { \s -> TokenTo }
+    "UNION" { \s -> TokenUnion }
+    "GROUP" { \s -> TokenGroup }
+    "MAX"   { \s -> TokenMax }
+    "MIN"   { \s -> TokenMin }
+    "," { \s -> TokenComma }
     $digit+ { \s -> TokenNumber (read s) }
     "in" { \s -> TokenIn }
     "&&" { \s -> TokenAnd }
@@ -37,6 +43,13 @@ tokens :-
 data Token = TokenSelect
            | TokenFrom
            | TokenWhere
+           | TokenTo
+           | TokenUnion
+           | TokenGroup
+           | TokenMax
+           | TokenMin
+           | TokenComma
+           | TokenNumber Int
            | TokenIn
            | TokenAnd
            | TokenOr
@@ -53,6 +66,5 @@ data Token = TokenSelect
            | TokenLineEnd
            | TokenVar String
            | TokenURI String
-           | TokenNumber Int
            deriving (Eq, Show)
 }
