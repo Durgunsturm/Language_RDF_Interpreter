@@ -67,4 +67,33 @@ data Token = TokenSelect AlexPosn
            | TokenVar AlexPosn String
            | TokenURI AlexPosn String
            deriving (Eq, Show)
+
+tokenPosn :: Token -> AlexPosn
+tokenPosn t = case t of
+    TokenSelect p -> p
+    TokenFrom p -> p
+    TokenWhere p -> p
+    TokenTo p -> p
+    TokenUnion p -> p
+    TokenGroup p -> p
+    TokenMax p -> p
+    TokenMin p -> p
+    TokenComma p -> p
+    TokenNumber p _ -> p
+    TokenIn p -> p
+    TokenAnd p -> p
+    TokenOr p -> p
+    TokenLessThanOrEquals p -> p
+    TokenGreaterThanOrEquals p -> p
+    TokenNot p -> p
+    TokenEquals p -> p
+    TokenLessThan p -> p
+    TokenGreaterThan p -> p
+    TokenLParentheses p -> p
+    TokenRParentheses p -> p
+    TokenLCurly p -> p
+    TokenRCurly p -> p
+    TokenLineEnd p -> p
+    TokenVar p _ -> p
+    TokenURI p _ -> p
 }

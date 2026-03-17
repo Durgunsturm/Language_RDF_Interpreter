@@ -25,7 +25,9 @@ source-repository head
 
 library
   exposed-modules:
+      Grammar
       Lib
+      Tokens
   other-modules:
       Paths_tokeniser
   autogen-modules:
