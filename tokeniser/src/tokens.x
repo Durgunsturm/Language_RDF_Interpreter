@@ -19,6 +19,11 @@ tokens :-
     "GROUP" { \p s -> TokenGroup p }
     "MAX"   { \p s -> TokenMax p }
     "MIN"   { \p s -> TokenMin p }
+    "COUNT" { \p s -> TokenCount p }
+    "SUM" { \p s -> TokenSum p }
+    "AVG" { \p s -> TokenAvg p }
+    "SAMPLE" { \p s -> TokenSample p }
+    "GROUP_CONCAT" { \p s -> TokenGroupConcat p }
     "," { \p s -> TokenComma p }
     $digit+ { \p s -> TokenNumber p (read s) }
     "in" { \p s -> TokenIn p }
@@ -48,6 +53,11 @@ data Token = TokenSelect AlexPosn
            | TokenGroup AlexPosn
            | TokenMax AlexPosn
            | TokenMin AlexPosn
+           | TokenCount AlexPosn
+           | TokenSum AlexPosn
+           | TokenAvg AlexPosn
+           | TokenSample AlexPosn
+           | TokenGroupConcat AlexPosn
            | TokenComma AlexPosn
            | TokenNumber AlexPosn Int
            | TokenIn AlexPosn
@@ -78,6 +88,11 @@ tokenPosn t = case t of
     TokenGroup p -> p
     TokenMax p -> p
     TokenMin p -> p
+    TokenCount p -> p
+    TokenSum p -> p
+    TokenAvg p -> p
+    TokenSample p -> p
+    TokenGroupConcat p -> p
     TokenComma p -> p
     TokenNumber p _ -> p
     TokenIn p -> p
