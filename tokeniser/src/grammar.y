@@ -37,18 +37,40 @@ import Tokens
 %right '!'
 %left "||"
 %left "&&"
+%nonassoc '=' '<' '>' "<=" ">="
 %% 
 
-Exp             : SelectClause FromClause ToClause WhereClause      { Query $1 $2 $3 $4 }
+Exp             : Expr                                              { [$1] }
+                | Expr Exp                                          { $2 ++ [$1] }
+
+Expr            : SingleQuery                                       { Sing $1 }
+                | UNION UnionClause                                 { Mult $2 }
+
+SingleQuery     : SelectClause FromClause ToClause WhereClause      { Selector $1 $2 $3 $4 }
+
+UnionClause     : SingleQuery                                       { [$1] }
+                | UnionClause SingleQuery                           { $1 ++ [$2] }
+
+ConditionVal    : uri                                               { UriCond $1 }
+                | int                                               { IntCond $1 }
 
 VarList         : var                                               { [$1] }
                 | VarList var                                       { $1 ++ [$2] }
 
-ConditionClause : var '=' uri '.'                                   { UriCond $1 $3 }
-                | var '=' int '.'                                   { IntCond $1 $3 }
+ConditionClause : '!' ConditionClause                               { Not $2 }
+                | '(' ConditionClause ')'                           { $2 }
+                | ConditionClause "&&" ConditionClause              { And $1 $3 }
+                | ConditionClause "||" ConditionClause              { Or $1 $3 }
+                | var '=' ConditionVal                              { Eq $1 $3 }
+                | var '<' ConditionVal                              { Lt $1 $3 }
+                | var '>' ConditionVal                              { Gt $1 $3 }
+                | var "<=" ConditionVal                             { LtEq $1 $3 }
+                | var ">=" ConditionVal                             { GtEq $1 $3 }
 
-Conditions      : ConditionClause                                   { [$1] }
-                | Conditions ConditionClause                        { $1 ++ [$2] }
+ConditionLine   : ConditionClause '.'                               { $1 }
+
+Conditions      : ConditionLine                                     { [$1] }
+                | Conditions ConditionLine                          { $1 ++ [$2] }
 
 WhereClause     : WHERE '{' Conditions '}'                          { $3 }
 
@@ -66,15 +88,27 @@ parseError (t:ts) = error ("Parse error at line:column " ++ showPosn (tokenPosn 
 showPosn :: AlexPosn -> String
 showPosn (AlexPn _ line col) = show line ++ ":" ++ show col
 
+data ConditionVal               = UriCond String
+                                | IntCond Int
+                                deriving Show
+
 type Var                        = String
 
 type VarList                    = [Var]
 
-data ConditionClause            = UriCond Var String
-                                | IntCond Var Int
+data ConditionClause            = Not ConditionClause
+                                | And ConditionClause ConditionClause
+                                | Or ConditionClause ConditionClause
+                                | Eq Var ConditionVal
+                                | Lt Var ConditionVal
+                                | Gt Var ConditionVal
+                                | LtEq Var ConditionVal
+                                | GtEq Var ConditionVal
                                 deriving Show
 
-type Conditions                 = [ConditionClause]
+type ConditionLine              = ConditionClause
+type Conditions                 = [ConditionLine]
+
 
 type WhereClause                = Conditions
 
@@ -84,6 +118,14 @@ type FromClause                 = [String]
 
 type SelectClause               = [String]
 
-data Exp                        = Query SelectClause FromClause ToClause WhereClause
+data SingleQuery                = Selector SelectClause FromClause ToClause WhereClause
                                 deriving Show
+
+type UnionClause                = [SingleQuery]
+
+data Expr                       = Sing SingleQuery
+                                | Mult UnionClause
+                                deriving Show
+
+type Exp                        = [Expr]
 }

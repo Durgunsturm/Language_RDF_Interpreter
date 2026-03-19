@@ -36,7 +36,7 @@ tokens :-
     "}" { \p s -> TokenRCurly p }
     "." { \p s -> TokenLineEnd p }
     \? $alpha [$alpha $digit]* { \p s -> TokenVar p s }
-    "<" [^\>]+ ">" { \p s -> TokenURI p s }
+    "<" [^ \>]+ ">" { \p s -> TokenURI p s }
 
 -- Haskell data types    
 {

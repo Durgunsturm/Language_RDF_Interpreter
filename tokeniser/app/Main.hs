@@ -17,7 +17,9 @@ main' = do
         (fileName : _ ) -> do
             sourceText <- readFile fileName
             putStrLn ("Parsing : " ++ sourceText)
-            let parsedProg = parseCalc (alexScanTokens sourceText)
+            let tokens = (alexScanTokens sourceText)
+            putStrLn ("Lexed as " ++ show tokens)
+            let parsedProg = parseCalc tokens
             putStrLn ("Parsed as " ++ show parsedProg)
         [] -> do
             putStrLn "Error: No input file provided."
@@ -26,3 +28,4 @@ noParse :: ErrorCall -> IO ()
 noParse e = do let err =  show e
                hPutStr stderr err
                return ()
+
