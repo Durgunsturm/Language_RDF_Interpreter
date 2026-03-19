@@ -21,3 +21,5 @@ WHERE                               Starts conditions
     GROUP
     MAX
     MIN
+    INTER                           Intersection of two graphs
+    DIFF                            Difference of two graphs
