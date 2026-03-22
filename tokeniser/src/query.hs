@@ -9,7 +9,7 @@ data RDFTerm = URI String | LitInt Int | LitStr String deriving (Show, Eq, Ord)
 type GraphRef = Maybe String
 type Triple = (RDFTerm, RDFTerm, RDFTerm)
 type Binding = [(String, RDFTerm)]
-data Query = Select [String] [String] [Condition] 
+data Query = Select [String] [String] [Condition] -- [input variables] [graph variables] [query conditions]
 		   | Union Query Query
 		   | Intersection Query Query
 		   deriving Show
@@ -20,6 +20,8 @@ data Condition =
 	| Lt String GraphRef Int 
 	| Gte String GraphRef Int
 	| Lte String GraphRef Int
+	| Max String GraphRef
+	| Min String GraphRef
 	| And Condition Condition
 	| Or Condition Condition
 	deriving Show
@@ -86,40 +88,69 @@ resolveVar :: String -> GraphRef -> String
 resolveVar var Nothing = var
 resolveVar var (Just g) = g ++ "." ++ var
 
--- evaluate single condition against binding
-evalCondition :: Condition -> Binding -> Bool
-evalCondition (Eq var gRef term) env =
+-- evaluate single condition against binding, utilise full dataset for aggregate functions
+evalCondition :: Condition -> [Binding] -> Binding -> Bool
+evalCondition (Eq var gRef term) _ env =
 	case lookupVar (resolveVar var gRef) env of 
 		Just val -> val == term
 		Nothing -> False
-evalCondition (Not var gRef term) env =
+evalCondition (Not var gRef term) _ env =
 	case lookupVar (resolveVar var gRef) env of
 		Just val -> val /= term
 		Nothing -> False
-evalCondition (Gt var gRef val) env =
+evalCondition (Gt var gRef val) _ env =
 	case lookupVar (resolveVar var gRef) env of
 		Just (LitInt i) -> i > val
 		_ -> False
-evalCondition (Lt var gRef val) env =
+evalCondition (Lt var gRef val) _ env =
 	case lookupVar (resolveVar var gRef) env of
 		Just (LitInt i) -> i < val
 		_ -> False
-evalCondition (Gte var gRef val) env =
+evalCondition (Gte var gRef val) _ env =
 	case lookupVar (resolveVar var gRef) env of
 		Just (LitInt i) -> i >= val
 		_ -> False
-evalCondition (Lte var gRef val) env =
+evalCondition (Lte var gRef val) _ env =
 	case lookupVar (resolveVar var gRef) env of
 		Just (LitInt i) -> i <= val
 		_ -> False
-evalCondition (And c1 c2) env =
-	evalCondition c1 env && evalCondition c2 env
-evalCondition (Or c1 c2) env =
-	evalCondition c1 env || evalCondition c2 env
+evalCondition (Max var gRef) allEnvs env =
+	let
+		resolvedVar = resolveVar var gRef
 
--- check binding satisfies all conditions in WHERE clause
-evalConditions :: [Condition] -> Binding -> Bool
-evalConditions cons env = all (`evalCondition` env) cons
+		isTargetVar k = k == var || dropWhile (/= '.') k == "." ++ var
+		
+		groupingKey = filter (\(k, _) -> not (isTargetVar k)) env
+
+		matchesGroup key targetEnv = all (\(k, v) -> lookupVar k targetEnv == Just v) key
+
+		sameGroupVals = [val | e <- allEnvs, matchesGroup groupingKey e, Just val <- [lookupVar resolvedVar e]]
+	in case lookupVar resolvedVar env of
+		Just val -> not (null sameGroupVals) && val == maximum sameGroupVals
+		Nothing -> False
+evalCondition (Min var gRef) allEnvs env =
+	let
+		resolvedVar = resolveVar var gRef
+
+		isTargetVar k = k == var || dropWhile (/= '.') k == "." ++ var
+		
+		groupingKey = filter (\(k, _) -> not (isTargetVar k)) env
+
+		matchesGroup key targetEnv = all (\(k, v) -> lookupVar k targetEnv == Just v) key
+
+		sameGroupVals = [val | e <- allEnvs, matchesGroup groupingKey e, Just val <- [lookupVar resolvedVar e]]
+	in case lookupVar resolvedVar env of
+		Just val -> not (null sameGroupVals) && val == minimum sameGroupVals
+		Nothing -> False
+evalCondition (And c1 c2) allEnvs env =
+	evalCondition c1 allEnvs env && evalCondition c2 allEnvs env
+evalCondition (Or c1 c2) allEnvs env =
+	evalCondition c1 allEnvs env || evalCondition c2 allEnvs env
+
+-- apply condition sequentially to execute filters before aggregate functions
+applyConditions :: [Condition] -> [Binding] -> [Binding]
+applyConditions cons initialEnvs =
+	foldl (\envs cond -> filter (evalCondition cond envs) envs) initialEnvs cons
 
 -- project only variables requested in SELECT clause
 project :: [String] -> Binding -> Binding
@@ -166,7 +197,7 @@ executeQuery (Select vars fromGraphs cons) ds =
 		initialBindings = map concat combinations
 
 		-- evaluate and project
-		filteredBindings = filter (evalConditions cons) initialBindings
+		filteredBindings = applyConditions cons initialBindings
 		projectedBindings = map (project vars) filteredBindings
 		triples = mapMaybe bindingToTriple projectedBindings
 	in nub triples
@@ -184,41 +215,43 @@ executeQuery (Intersection q1 q2) ds =
 
 -- for testing, predefines generic content for RDF document, converts that String into list of Triple objects, predefines generic query in parsed format, runs executeQuery on predefined program and parsed triples, then outputs results as an unparsed string
 main :: IO ()
-main = do
-	let 
-		-- Task 1
-		rdfDataG11 = ?
-		triplesG11 = parseRDF rdfData11
-		rdfDataG21 = ?
-		triplesG21 = parseRDF rdfDataG21
-		dataset1 = [("?g1",triplesG11),("?g2",triplesG21)]
-		query1 = Union (Select ["?s","?p","?o"] ["?g1"] []) (Select ["?s","?p","?o"] ["?g2"] [])
+main = 
+    do
+        putStrLn "Task 1 results:"
+        putStr (unparseRDF (executeQuery query1 dataset1))
+        putStrLn "\nTask 2 results:"
+        putStr (unparseRDF (executeQuery query2 dataset2))
+        putStrLn "\nTask 3 results:"
+        putStr (unparseRDF (executeQuery query3 dataset3))
+		putStrLn "\nTask 4 results:"
+		putStr (unparseRDF (executeQuery query4 dataset4))
+		putStrLn "\nTask 5 results:"
+	
+    where 
+        -- Task 1
+	    rdfDataG11 = "<http://example.org/alice> <http://example.org/ont/name> \"Alice\" .\n<http://example.org/alice> <http://example.org/ont/worksFor> <http://example.org/uos> .\n<http://example.org/bob> <http://example.org/ont/name> \"Bob\" ."
+	    triplesG11 = parseRDF rdfDataG11
+	    rdfDataG21 = "<http://example.org/charlie> <http://example.org/ont/name> \"Charlie\" .\n<http://example.org/charlie> <http://example.org/ont/studiesAt> <http://example.org/uos> .\n<http://example.org/dave> <http://example.org/ont/name> \"Dave\" ."
+	    triplesG21 = parseRDF rdfDataG21
+	    dataset1 = [("?g1",triplesG11),("?g2",triplesG21)]
+	    query1 = Union (Select ["?s","?p","?o"] ["?g1"] []) (Select ["?s","?p","?o"] ["?g2"] [])
 
-		-- Task 2
-		rdfData2 = ?
-		triples2 = parseRDF rdfData2
-		dataset2 = [("?g",triples)]
-		query2 = Select ["?s","?p","?o"] ["?g"] [And (Eq "?p" Nothing (URI "http://example.org/ont/hasAge")) (Gte "?o" Nothing 21)]
-		
-		-- Task 3
-		rdfData3 = ?
-		triples3 = parseRDF rdfData3
-		dataset3 = [("?g",triples)]
-		query3 = Select ["?s","?p","?o"] ["?g"] [And (Or (Eq "?p" Nothing (URI "http://example.org/ont/studiesAt")) (Eq "?p" Nothing (URI "http://example.org/ont/worksFor"))) (Eq "?o" Nothing (URI "http://example.org/uos"))]
+	    -- Task 2
+	    rdfData2 = "<http://example.org/alice> <http://example.org/ont/hasAge> 25 .\n<http://example.org/bob> <http://example.org/ont/hasAge> 19 .\n<http://example.org/charlie> <http://example.org/ont/hasAge> 30 .\n<http://example.org/dave> <http://example.org/ont/name> \"Dave\" ."
+	    triples2 = parseRDF rdfData2
+	    dataset2 = [("?g",triples2)]
+	    query2 = Select ["?s","?p","?o"] ["?g"] [(Eq "?p" Nothing (URI "http://example.org/ont/hasAge")), (Gte "?o" Nothing 21)]
+	
+	    -- Task 3
+	    rdfData3 = "<http://example.org/alice> <http://example.org/ont/studiesAt> <http://example.org/uos> .\n<http://example.org/bob> <http://example.org/ont/worksFor> <http://example.org/uos> .\n<http://example.org/charlie> <http://example.org/ont/studiesAt> <http://example.org/oxford> .\n<http://example.org/dave> <http://example.org/ont/worksFor> <http://example.org/google> .\n<http://example.org/eve> <http://example.org/ont/name> \"Eve\" ."
+	    triples3 = parseRDF rdfData3
+	    dataset3 = [("?g",triples3)]
+	    query3 = Select ["?s","?p","?o"] ["?g"] [And (Or (Eq "?p" Nothing (URI "http://example.org/ont/studiesAt")) (Eq "?p" Nothing (URI "http://example.org/ont/worksFor"))) (Eq "?o" Nothing (URI "http://example.org/uos"))]
 
 		-- Task 4
+		rdfData4 = "<http://example.org/alice> <http://example.org/ont/price> 100 .\n<http://example.org/alice> <http://example.org/ont/price> 200 .\n<http://example.org/bob> <http://example.org/ont/price> 50 .\n<http://example.org/bob> <http://example.org/ont/price> 150 .\n<http://example.org/charlie> <http://example.org/ont/name> \"Charlie\" ."
+		triples4 = parseRDF rdfData4
+		dataset4 = [("?quux",triples4)]
+		query4 = Select ["?s","?p","?o"] ["?quux"] [Eq "?p" Nothing (URI "http://example.org/ont/price"), Max "?o" Nothing]
 
 		-- Task 5
-
-	putStrLn "Task 1 results:"
-	putStr (unparseRDF (executeQuery query1 dataset1))
-	
-	putStrLn "\nTask 2 results:"
-	putStr (unparseRDF (executeQuery query2 dataset2))
-
-	putStrLn "\nTask 3 results:"
-	putStr (unparseRDF (executeQuery query3 dataset3))
-
-	putStrLn "\nTask 4 results:"
-
-	putStrLn "\nTask 5 results:"
