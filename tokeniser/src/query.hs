@@ -2,14 +2,17 @@
 module Main where
 import Data.Maybe (mapMaybe)
 import Data.Char (isDigit)
-import Data.List (nub)
+import Data.List (nub,intersect)
 
 type Dataset = [(String, [Triple])]
 data RDFTerm = URI String | LitInt Int | LitStr String deriving (Show, Eq, Ord)
 type GraphRef = Maybe String
 type Triple = (RDFTerm, RDFTerm, RDFTerm)
 type Binding = [(String, RDFTerm)]
-data Query = Select [String] [String] [Condition] deriving Show
+data Query = Select [String] [String] [Condition] 
+		   | Union Query Query
+		   | Intersection Query Query
+		   deriving Show
 data Condition = 
 	Eq String GraphRef RDFTerm 
 	| Not String GraphRef RDFTerm
@@ -132,7 +135,7 @@ bindingToTriple env = do
 
 -- takes parsed program and RDF graph and then filters contents of RDF graph against conditions in program 
 executeQuery :: Query -> Dataset -> [Triple]
-executeQuery (Select vars fromGraphs cons) db =
+executeQuery (Select vars fromGraphs cons) ds =
 	let
 		-- creates bindings for triple, primary graph is implicit
 		bindTriple :: String -> Bool -> Triple -> Binding
@@ -149,7 +152,7 @@ executeQuery (Select vars fromGraphs cons) db =
 			in explicitBinds ++ implicitBinds
 
 		-- extract specified graphs from dataset
-		graphsData = [(g,ts) | g <- fromGraphs, Just ts <- [lookup g db]]
+		graphsData = [(g,ts) | g <- fromGraphs, Just ts <- [lookup g ds]]
 
 		-- build list of bindings for each graph (first graph marked as True)
 		buildGraphBindings :: [(String, [Triple])] -> [[Binding]]
@@ -167,29 +170,55 @@ executeQuery (Select vars fromGraphs cons) db =
 		projectedBindings = map (project vars) filteredBindings
 		triples = mapMaybe bindingToTriple projectedBindings
 	in nub triples
+executeQuery (Union q1 q2) ds =
+	let 
+		results1 = executeQuery q1 ds
+		results2 = executeQuery q2 ds
+	in nub (results1 ++ results2)
+executeQuery (Intersection q1 q2) ds =
+	let
+		results1 = executeQuery q1 ds
+		results2 = executeQuery q2 ds
+	in intersect results1 results2
 		
 
 -- for testing, predefines generic content for RDF document, converts that String into list of Triple objects, predefines generic query in parsed format, runs executeQuery on predefined program and parsed triples, then outputs results as an unparsed string
 main :: IO ()
 main = do
 	let 
-		rdfData1 = "<http://data.org/Alice> <http://example.org/ont/hasAge> 25 .\n<http://data.org/Bob> <http://example.org/ont/hasAge> 19 ."
-		triples1 = parseRDF rdfData1
-		rdfData2 = "<http://data.org/Charlie> <http://example.org/ont/hasAge> 30 .\n<http://data.org/Alice> <http://example.org/ont/knows> <http://data.org/Bob> ."
+		-- Task 1
+		rdfDataG11 = ?
+		triplesG11 = parseRDF rdfData11
+		rdfDataG21 = ?
+		triplesG21 = parseRDF rdfDataG21
+		dataset1 = [("?g1",triplesG11),("?g2",triplesG21)]
+		query1 = Union (Select ["?s","?p","?o"] ["?g1"] []) (Select ["?s","?p","?o"] ["?g2"] [])
+
+		-- Task 2
+		rdfData2 = ?
 		triples2 = parseRDF rdfData2
-		dataset = [("?g1",triples1),("?g2",triples2)]
-		query1 = Select ["?s","?p","?o"] ["?g1"]
-			[And
-				(Eq "?p" Nothing (URI "http://example.org/ont/hasAge"))
-				(Gte "?o" Nothing 21)
-			]
-		query2 = Select ["?s","?p","?o"] ["?g1","?g2"]
-			[And
-				(Eq "?p" (Just "?g1") (URI "http://example.org/ont/hasAge"))
-				(Gte "?o" Nothing 21)
-			]
-	putStrLn "Query 1 results:"
-	putStr (unparseRDF (executeQuery query1 dataset))
+		dataset2 = [("?g",triples)]
+		query2 = Select ["?s","?p","?o"] ["?g"] [And (Eq "?p" Nothing (URI "http://example.org/ont/hasAge")) (Gte "?o" Nothing 21)]
+		
+		-- Task 3
+		rdfData3 = ?
+		triples3 = parseRDF rdfData3
+		dataset3 = [("?g",triples)]
+		query3 = Select ["?s","?p","?o"] ["?g"] [And (Or (Eq "?p" Nothing (URI "http://example.org/ont/studiesAt")) (Eq "?p" Nothing (URI "http://example.org/ont/worksFor"))) (Eq "?o" Nothing (URI "http://example.org/uos"))]
+
+		-- Task 4
+
+		-- Task 5
+
+	putStrLn "Task 1 results:"
+	putStr (unparseRDF (executeQuery query1 dataset1))
 	
-	putStrLn "\nQuery 2 results:"
-	putStr (unparseRDF (executeQuery query2 dataset))
+	putStrLn "\nTask 2 results:"
+	putStr (unparseRDF (executeQuery query2 dataset2))
+
+	putStrLn "\nTask 3 results:"
+	putStr (unparseRDF (executeQuery query3 dataset3))
+
+	putStrLn "\nTask 4 results:"
+
+	putStrLn "\nTask 5 results:"
