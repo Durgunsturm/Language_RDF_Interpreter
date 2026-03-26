@@ -13,8 +13,11 @@ import Tokens
     TO                  { TokenTo _ }
     UNION               { TokenUnion _ }
     GROUP               { TokenGroup _ }
+    INTER               { TokenInter _ }
+    DIFF                { TokenDiff _ }
     MAX                 { TokenMax _ }
     MIN                 { TokenMin _ }
+    NORM                { TokenNorm _ }
     ','                 { TokenComma _ }
     int                 { TokenNumber _ $$ }
     in                  { TokenIn _ }
@@ -37,19 +40,23 @@ import Tokens
 %right '!'
 %left "||"
 %left "&&"
+%left UNION GROUP INTER DIFF
 %nonassoc '=' '<' '>' "<=" ">="
 %% 
 
 Exp             : Expr                                              { [$1] }
-                | Expr Exp                                          { $2 ++ [$1] }
+                | Expr Exp                                          { $1 : $2 }
 
 Expr            : SingleQuery                                       { Sing $1 }
-                | UNION UnionClause                                 { Mult $2 }
+                | '(' Expr UNION Expr ')'                           { Union $2 $4 }
+                | '(' Expr GROUP Expr ')'                           { Group $2 $4 }
+                | '(' Expr INTER Expr ')'                           { Inter $2 $4 }
+                | '(' Expr DIFF Expr ')'                            { Diff $2 $4 }
+                | var '=' ConditionVal '.'                          { Variable $1 $3 }
+                | var '=' NORM var '.'                              { Norm $1 $4 $4 }
+                | var '=' NORM var var '.'                          { Norm $1 $4 $5 }
 
 SingleQuery     : SelectClause FromClause ToClause WhereClause      { Selector $1 $2 $3 $4 }
-
-UnionClause     : SingleQuery                                       { [$1] }
-                | UnionClause SingleQuery                           { $1 ++ [$2] }
 
 ConditionVal    : uri                                               { UriCond $1 }
                 | int                                               { IntCond $1 }
@@ -121,10 +128,13 @@ type SelectClause               = [String]
 data SingleQuery                = Selector SelectClause FromClause ToClause WhereClause
                                 deriving Show
 
-type UnionClause                = [SingleQuery]
-
 data Expr                       = Sing SingleQuery
-                                | Mult UnionClause
+                                | Union Expr Expr
+                                | Group Expr Expr
+                                | Inter Expr Expr
+                                | Diff Expr Expr
+                                | Variable String ConditionVal
+                                | Norm String String String
                                 deriving Show
 
 type Exp                        = [Expr]

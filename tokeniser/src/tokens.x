@@ -17,8 +17,11 @@ tokens :-
     "TO" { \p s -> TokenTo p }
     "UNION" { \p s -> TokenUnion p }
     "GROUP" { \p s -> TokenGroup p }
+    "INTER" { \p s -> TokenInter p }
+    "DIFF"  { \p s -> TokenDiff p }
     "MAX"   { \p s -> TokenMax p }
     "MIN"   { \p s -> TokenMin p }
+    "init"  { \p s -> TokenNorm p }
     "COUNT" { \p s -> TokenCount p }
     "SUM" { \p s -> TokenSum p }
     "AVG" { \p s -> TokenAvg p }
@@ -51,8 +54,11 @@ data Token = TokenSelect AlexPosn
            | TokenTo AlexPosn
            | TokenUnion AlexPosn
            | TokenGroup AlexPosn
+           | TokenInter AlexPosn
+           | TokenDiff AlexPosn
            | TokenMax AlexPosn
            | TokenMin AlexPosn
+           | TokenNorm AlexPosn
            | TokenCount AlexPosn
            | TokenSum AlexPosn
            | TokenAvg AlexPosn
@@ -86,8 +92,11 @@ tokenPosn t = case t of
     TokenTo p -> p
     TokenUnion p -> p
     TokenGroup p -> p
+    TokenInter p -> p
+    TokenDiff p -> p
     TokenMax p -> p
     TokenMin p -> p
+    TokenNorm p -> p
     TokenCount p -> p
     TokenSum p -> p
     TokenAvg p -> p

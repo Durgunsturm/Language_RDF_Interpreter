@@ -17,8 +17,8 @@ main' = do
         (fileName : _ ) -> do
             sourceText <- readFile fileName
             putStrLn ("Parsing : " ++ sourceText)
-            let tokens = (alexScanTokens sourceText)
-            putStrLn ("Lexed as " ++ show tokens)
+            let tokens = alexScanTokens sourceText
+            --putStrLn ("Lexed as " ++ show tokens)
             let parsedProg = parseCalc tokens
             putStrLn ("Parsed as " ++ show parsedProg)
         [] -> do
