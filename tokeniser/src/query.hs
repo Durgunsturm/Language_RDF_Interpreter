@@ -4,66 +4,74 @@ import Data.Maybe (mapMaybe)
 import Data.Char (isDigit)
 import Data.List (nub,intersect)
 
-type Dataset = [(String, [Triple])]
-data RDFTerm = URI String | LitInt Int | LitStr String deriving (Show, Eq, Ord)
-type GraphRef = Maybe String
-type Triple = (RDFTerm, RDFTerm, RDFTerm)
-type Binding = [(String, RDFTerm)]
-data Query = Select [String] [String] [Condition] -- [input variables] [graph variables] [query conditions]
-		   | Union Query Query
-		   | Intersection Query Query
-		   deriving Show
-data Operand = Var String GraphRef | Const RDFTerm deriving Show
+type Dataset = [(String, [Triple])] -- List of graph names and associated triples (parsed from input graphs)
+data RDFTerm = 
+	URI String  -- value in triple of the form <uri_text>
+	| LitInt Int -- value in triple which is an integer
+	| LitStr String -- value in triple which is a string
+	deriving (Show, Eq, Ord)
+type GraphRef = Maybe String -- part of the 'in' syntax defining the specific graph a variable is referencing (Just "graph_name" or Nothing)
+type Triple = (RDFTerm, RDFTerm, RDFTerm) -- parsed version of the RDF graphs stored in a datatype that allows for easy manipulation in condition matching
+type Binding = [(String, RDFTerm)] -- list of variable name ("?s", "?p", "?o", "?graph1.?s", etc...) and associated RDFTerm
+data Query = 
+	Select [String] [String] [Condition] -- [input variables] [graph variables] [query conditions]
+	| Union Query Query -- union is applied to two query clauses, concatenating the output of the two associated queries
+	| Intersection Query Query -- intersection is applied to two query clauses, finding the intersection of the output of the two associated queries
+	deriving Show
+data Operand = 
+	Var String GraphRef -- variables used in the WHERE clause of the form "?variable_name" Maybe "?graph_name" (from lines such as ?p in ?g1 = ...)
+	| Const RDFTerm -- constant values used in the WHERE clause which can be either a string, integer or URI value
+	deriving Show 
 data Condition = 
-	Eq Operand Operand
-	| Not Operand Operand
-	| Gt Operand Operand 
-	| Lt Operand Operand
-	| Gte Operand Operand
-	| Lte Operand Operand
-	| Max String GraphRef
-	| Min String GraphRef
-	| And Condition Condition
-	| Or Condition Condition
+	Eq Operand Operand -- equality operator '='
+	| Not Operand Operand -- inequality operator '!='
+	| Gt Operand Operand  -- greater than operator '>'
+	| Lt Operand Operand -- less than operator '<'
+	| Gte Operand Operand -- greater than or equal to operator '>='
+	| Lte Operand Operand -- less than or equal to operator '<='
+	| Max String GraphRef -- MAX statement in WHERE clause, finds the triples containing the maximum value associated with the input variable (applied after all other conditions have already been filtered)
+	| Min String GraphRef -- MIN statement in WHERE clause, finds the triples containing the minimum value associated with the input variable (applied after all other conditions have already been filtered)
+	| And Condition Condition -- AND statement, filters triples such that returned triples must match all conditions in both 'branches' of the statement
+	| Or Condition Condition -- OR statement filters triples such that returned triples must match condition of (at least) one of the 'branches' of the statement
 	deriving Show
 
 -- separates line into 3 strings: subject, predicate, object
 tokenise :: String -> [String]
 tokenise [] = []
-tokenise (' ':xs) = tokenise xs
-tokenise ('\t':xs) = tokenise xs
-tokenise ('"':xs) =
-	let (str, rest) = break (== '"') xs
+tokenise (' ':xs) = tokenise xs -- ignore whitespace at head of String
+tokenise ('\t':xs) = tokenise xs -- ignore \t characters at head of String
+tokenise ('"':xs) = -- for string in RDF graph
+	let (str, rest) = break (== '"') xs -- take all characters from first '"' to next '"'
 	in case rest of
 		('"':rs) -> ("\"" ++ str ++ "\"") : tokenise rs
 		_ -> ("\"" ++ str) : tokenise rest
-tokenise ('<':xs) =
-	let (str, rest) = break (== '>') xs
+tokenise ('<':xs) = -- for URI in RDF graph
+	let (str, rest) = break (== '>') xs -- take all characters from first '<' to next '>'
 	in case rest of
 		('>':rs) -> ("<" ++ str ++ ">") : tokenise rs
 		_ -> ("<" ++ str) : tokenise rest
-tokenise xs =
+tokenise xs = -- otherwise (distinguish )
 	let (token, rest) = break (\c -> c == ' ' || c == '\t') xs
 	in token : tokenise rest
 
 -- converts tokenised strings into RDFTerm values
 parseTerm :: String -> RDFTerm
-parseTerm ('<':xs) | not (null xs) && last xs == '>' = URI (init xs)
-parseTerm ('"':xs) | not (null xs) && last xs == '"' = LitStr (init xs)
-parseTerm str
-	| not (null str) && all isDigit (if head str == '-' then tail str else str) = LitInt (read str)
-	| otherwise = LitStr str
+parseTerm ('<':xs) | not (null xs) && last xs == '>' = URI (init xs) -- when xs not null and final xs character is >, produce a URI RDF term
+parseTerm ('"':xs) | not (null xs) && last xs == '"' = LitStr (init xs) -- when xs is not null and final xs character is ", produce a String RDF term
+parseTerm str -- otherwise
+	| not (null str) && all isDigit (if head str == '-' then tail str else str) = LitInt (read str) -- if characters in term are integers, produce an Integer RDF term
+	| otherwise = LitStr str -- default to string when all other options fail
 
 -- tokenises individual line and then converts elements into RDFTerms, returns a Maybe Triple to ensure a value is always returned
 parseLine :: String -> Maybe Triple
 parseLine line = 
-	case filter (/= ".") (tokenise line) of
-		[s, p, o] -> Just (parseTerm s, parseTerm p, parseTerm o)
+	case filter (/= ".") (tokenise line) of -- filter out '.' characters
+		[s, p, o] -> Just (parseTerm s, parseTerm p, parseTerm o) -- Maybe Triple containing parsed terms for subject, predicate,and object
 		_ -> Nothing
 
 -- parses each line individually, using Haskell 'lines' function to separate on '\n' characters in doc
 parseRDF :: String -> [Triple]
-parseRDF doc = mapMaybe parseLine (lines doc)
+parseRDF doc = mapMaybe parseLine (lines doc) -- parse lines of RDF graph into [Triple]
 
 -- converts RDFTerm into string
 unparseTerm :: RDFTerm -> String
@@ -96,62 +104,54 @@ evalOperand (Var var gRef) env = lookupVar (resolveVar var gRef) env
 
 -- evaluate single condition against binding, utilise full dataset for aggregate functions
 evalCondition :: Condition -> [Binding] -> Binding -> Bool
-evalCondition (Eq op1 op2) _ env =
-	case (evalOperand op1 env, evalOperand op2 env) of 
-		(Just val1, Just val2) -> val == val2
-		_ -> False
+evalCondition (Eq op1 op2) _ env = -- equality condition
+	case (evalOperand op1 env, evalOperand op2 env) of
+		(Just val1, Just val2) -> val == val2 -- true only when values are equal
+		_ -> False -- otherwise condition fails
 evalCondition (Not op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
-		(Just val1, Just val2) -> val /= val2
-		_ -> False
+		(Just val1, Just val2) -> val /= val2 -- true only when values are not equal
+		_ -> False -- otherwise condition fails
 evalCondition (Gt op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
-		(Just (LitInt i1), Just (LitInt i2)) -> i1 > i2
-		_ -> False
+		(Just (LitInt i1), Just (LitInt i2)) -> i1 > i2 -- values are integers and i1 > i2
+		_ -> False -- otherwise condition fails
 evalCondition (Lt var gRef val) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
-		(Just (LitInt i1), Just (LitInt i2)) -> i1 < i2
-		_ -> False
+		(Just (LitInt i1), Just (LitInt i2)) -> i1 < i2 -- values are integers and i1 < i2
+		_ -> False -- otherwise condition fails
 evalCondition (Gte var gRef val) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
-		(Just (LitInt i1), Just (LitInt i2)) -> i1 >= i2
-		_ -> False
+		(Just (LitInt i1), Just (LitInt i2)) -> i1 >= i2 -- values are integers and i1 >= i2
+		_ -> False -- otherwise condition fails
 evalCondition (Lte var gRef val) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
-		(Just (LitInt i1), Just (LitInt i2)) -> i1 <= i2
-		_ -> False
+		(Just (LitInt i1), Just (LitInt i2)) -> i1 <= i2 -- values are integers and i1 <= i2
+		_ -> False -- otherwise condition fails
 evalCondition (Max var gRef) allEnvs env =
 	let
-		resolvedVar = resolveVar var gRef
-
-		isTargetVar k = k == var || dropWhile (/= '.') k == "." ++ var
-		
-		groupingKey = filter (\(k, _) -> not (isTargetVar k)) env
-
+		resolvedVar = resolveVar var gRef -- resolve variable
+		isTargetVar k = k == var || dropWhile (/= '.') k == "." ++ var 
+		groupingKey = filter (\(k, _) -> not (isTargetVar k)) env -- filter triples in binding to only match against target variable
 		matchesGroup key targetEnv = all (\(k, v) -> lookupVar k targetEnv == Just v) key
-
-		sameGroupVals = [val | e <- allEnvs, matchesGroup groupingKey e, Just val <- [lookupVar resolvedVar e]]
+		sameGroupVals = [val | e <- allEnvs, matchesGroup groupingKey e, Just val <- [lookupVar resolvedVar e]] 
 	in case lookupVar resolvedVar env of
-		Just val -> not (null sameGroupVals) && val == maximum sameGroupVals
-		Nothing -> False
-evalCondition (Min var gRef) allEnvs env =
+		Just val -> not (null sameGroupVals) && val == maximum sameGroupVals -- maximum can fetch more than one valid triple, assuming those triples don't match on at least one other aspect (e.g. maximise object, if subject in two max triples is different output both triples)
+		Nothing -> False -- otherwise condition fails
+evalCondition (Min var gRef) allEnvs env = -- same logic as maximise, just replace Just val condition in return with minimum instead of maximum
 	let
 		resolvedVar = resolveVar var gRef
-
 		isTargetVar k = k == var || dropWhile (/= '.') k == "." ++ var
-		
 		groupingKey = filter (\(k, _) -> not (isTargetVar k)) env
-
 		matchesGroup key targetEnv = all (\(k, v) -> lookupVar k targetEnv == Just v) key
-
 		sameGroupVals = [val | e <- allEnvs, matchesGroup groupingKey e, Just val <- [lookupVar resolvedVar e]]
 	in case lookupVar resolvedVar env of
-		Just val -> not (null sameGroupVals) && val == minimum sameGroupVals
-		Nothing -> False
+		Just val -> not (null sameGroupVals) && val == minimum sameGroupVals -- minimum can fetch more than one valid triple, assuming those triples don't match on at least one other aspect (e.g. minimise object, if subject in two min triples is different output both triples)
+		Nothing -> False -- otherwise condition fails
 evalCondition (And c1 c2) allEnvs env =
-	evalCondition c1 allEnvs env && evalCondition c2 allEnvs env
+	evalCondition c1 allEnvs env && evalCondition c2 allEnvs env -- evaluate conditions of left and right 'branches'
 evalCondition (Or c1 c2) allEnvs env =
-	evalCondition c1 allEnvs env || evalCondition c2 allEnvs env
+	evalCondition c1 allEnvs env || evalCondition c2 allEnvs env -- evaluate conditions of left and right 'branches'
 
 -- apply condition sequentially to execute filters before aggregate functions
 applyConditions :: [Condition] -> [Binding] -> [Binding]
@@ -169,7 +169,7 @@ bindingToTriple [varS, varP, varO] env = do
 	p <- lookupVar varP env
 	o <- lookupVar varO env
 	return (s, p, o)
-bindingToTriple _ _ = Nothing
+bindingToTriple _ _ = Nothing -- otherwise return nothing
 
 -- takes parsed program and RDF graph and then filters contents of RDF graph against conditions in program 
 executeQuery :: Query -> Dataset -> [Triple]
@@ -179,15 +179,15 @@ executeQuery (Select vars fromGraphs cons) ds =
 		bindTriple :: String -> Bool -> Triple -> Binding
 		bindTriple gName isPrimary (s,p,o) =
 			let 
-				explicitBinds = [
+				explicitBinds = [ -- combines graph name with variable name when graph is explicitly specified
 								(gName ++ ".?s",s)
 								, (gName ++ ".?p",p)
 								, (gName ++ ".?o",o)
 								]
-				implicitBinds = if isPrimary 
+				implicitBinds = if isPrimary  -- only leaves bindings in first graph passed implicit
 								then [("?s",s),("?p",p),("?o",o)] 
 								else []
-			in explicitBinds ++ implicitBinds
+			in explicitBinds ++ implicitBinds -- return all bindings (explicit and implicit)
 
 		-- extract specified graphs from dataset
 		graphsData = [(g,ts) | g <- fromGraphs, Just ts <- [lookup g ds]]
@@ -207,23 +207,24 @@ executeQuery (Select vars fromGraphs cons) ds =
 		filteredBindings = applyConditions cons initialBindings
 		projectedBindings = map (project vars) filteredBindings
 		triples = mapMaybe (bindingToTriple vars) projectedBindings
-	in nub triples
+	in nub triples -- return result with removal of repeated triples
 executeQuery (Union q1 q2) ds =
 	let 
 		results1 = executeQuery q1 ds
 		results2 = executeQuery q2 ds
-	in nub (results1 ++ results2)
+	in nub (results1 ++ results2) -- return concatenation of executed query on both branches of UNION
 executeQuery (Intersection q1 q2) ds =
 	let
 		results1 = executeQuery q1 ds
 		results2 = executeQuery q2 ds
-	in intersect results1 results2
+	in intersect results1 results2 -- return intersection of executed query on both branches of INTERSECTION
 		
 
 -- for testing, predefines generic content for RDF document, converts that String into list of Triple objects, predefines generic query in parsed format, runs executeQuery on predefined program and parsed triples, then outputs results as an unparsed string
 main :: IO ()
 main = 
     do
+		-- output task name then unparsed string of the result of calling executeQuery on specified query and provided dataset (graph reference, list of triples)
         putStrLn "Task 1 results:"
         putStr (unparseRDF (executeQuery query1 dataset1))
         putStrLn "\nTask 2 results:"
@@ -237,35 +238,47 @@ main =
 	
     where 
         -- Task 1
+		-- generic RDF graph
 	    rdfDataG11 = "<http://example.org/alice> <http://example.org/ont/name> \"Alice\" .\n<http://example.org/alice> <http://example.org/ont/worksFor> <http://example.org/uos> .\n<http://example.org/bob> <http://example.org/ont/name> \"Bob\" ."
 	    triplesG11 = parseRDF rdfDataG11
-	    rdfDataG12 = "<http://example.org/charlie> <http://example.org/ont/name> \"Charlie\" .\n<http://example.org/charlie> <http://example.org/ont/studiesAt> <http://example.org/uos> .\n<http://example.org/dave> <http://example.org/ont/name> \"Dave\" ."
+	    -- generic RDF graph
+		rdfDataG12 = "<http://example.org/charlie> <http://example.org/ont/name> \"Charlie\" .\n<http://example.org/charlie> <http://example.org/ont/studiesAt> <http://example.org/uos> .\n<http://example.org/dave> <http://example.org/ont/name> \"Dave\" ."
 	    triplesG12 = parseRDF rdfDataG12
 	    dataset1 = [("?g1",triplesG11),("?g2",triplesG12)]
+		-- output the union of two graphs, leaving conditions on triples empty
 	    query1 = Union (Select ["?s","?p","?o"] ["?g1"] []) (Select ["?s","?p","?o"] ["?g2"] [])
 
 	    -- Task 2
+		-- generic RDF graph
 	    rdfData2 = "<http://example.org/alice> <http://example.org/ont/hasAge> 25 .\n<http://example.org/bob> <http://example.org/ont/hasAge> 19 .\n<http://example.org/charlie> <http://example.org/ont/hasAge> 30 .\n<http://example.org/dave> <http://example.org/ont/name> \"Dave\" ."
 	    triples2 = parseRDF rdfData2
 	    dataset2 = [("?g",triples2)]
+		-- output all triples where predicate = <specified_uri> and object is <= specified_int
 	    query2 = Select ["?s","?p","?o"] ["?g"] [Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/hasAge")), Gte (Var "?o" Nothing) (Const (LitInt 21))]
 	
 	    -- Task 3
+		-- generic RDF graph
 	    rdfData3 = "<http://example.org/alice> <http://example.org/ont/studiesAt> <http://example.org/uos> .\n<http://example.org/bob> <http://example.org/ont/worksFor> <http://example.org/uos> .\n<http://example.org/charlie> <http://example.org/ont/studiesAt> <http://example.org/oxford> .\n<http://example.org/dave> <http://example.org/ont/worksFor> <http://example.org/google> .\n<http://example.org/eve> <http://example.org/ont/name> \"Eve\" ."
 	    triples3 = parseRDF rdfData3
 	    dataset3 = [("?g",triples3)]
+		-- output all triples where predicate is one of two URIs and object is a specified URI
 	    query3 = Select ["?s","?p","?o"] ["?g"] [And (Or (Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/studiesAt"))) (Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/worksFor")))) (Eq (Var "?o" Nothing) (Const (URI "http://example.org/uos")))]
 
 		-- Task 4
+		-- generic RDF graph
 		rdfData4 = "<http://example.org/alice> <http://example.org/ont/price> 100 .\n<http://example.org/alice> <http://example.org/ont/price> 200 .\n<http://example.org/bob> <http://example.org/ont/price> 50 .\n<http://example.org/bob> <http://example.org/ont/price> 150 .\n<http://example.org/charlie> <http://example.org/ont/name> \"Charlie\" ."
 		triples4 = parseRDF rdfData4
 		dataset4 = [("?quux",triples4)]
+		-- output all triples where predicate is a specified URI, maximising the object
 		query4 = Select ["?s","?p","?o"] ["?quux"] [Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/price")), Max "?o" Nothing]
 
 		-- Task 5
+		-- generic RDF graph for xyzzy
 		rdfDataG51 = "<http://example.org/res1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/classA> .\n<http://example.org/res2> <http://example.org/ont/other> <http://example.org/classB> ."
 		triplesG51 = parseRDF rdfDataG51
+		-- generic RDF graph for plugh
 		rdfDataG52 = "<http://example.org/classA> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://example.org/classC> ."
 		triplesG52 = parseRDF rdfDataG52
 		dataset5 = [("?xyzzy",triplesG51),("?plugh",triplesG52)]
+		-- construct triples containing the subject and predicate of triples in g1 and the object of triples in g2 where: predicates in g1 are a specified URI, predicates in g2 are a specified URI, and the object in a triple in g1 matches the subject in a triple in g2
 		query5 = Select ["?s","?p","?plugh.?o"] ["?xyzzy","?plugh"] [And (Eq (Var "?p" Nothing) (Const (URI "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"))) (And (Eq (Var "?p" (Just "?plugh")) (Const (URI "http://www.w3.org/2000/01/rdf-schema#subClassOf"))) (Eq (Var "?o" Nothing) (Var "?s" (Just "?plugh"))))]
