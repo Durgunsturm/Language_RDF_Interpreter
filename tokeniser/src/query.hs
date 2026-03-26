@@ -116,15 +116,15 @@ evalCondition (Gt op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
 		(Just (LitInt i1), Just (LitInt i2)) -> i1 > i2 -- values are integers and i1 > i2
 		_ -> False -- otherwise condition fails
-evalCondition (Lt var gRef val) _ env =
+evalCondition (Lt op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
 		(Just (LitInt i1), Just (LitInt i2)) -> i1 < i2 -- values are integers and i1 < i2
 		_ -> False -- otherwise condition fails
-evalCondition (Gte var gRef val) _ env =
+evalCondition (Gte op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
 		(Just (LitInt i1), Just (LitInt i2)) -> i1 >= i2 -- values are integers and i1 >= i2
 		_ -> False -- otherwise condition fails
-evalCondition (Lte var gRef val) _ env =
+evalCondition (Lte op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
 		(Just (LitInt i1), Just (LitInt i2)) -> i1 <= i2 -- values are integers and i1 <= i2
 		_ -> False -- otherwise condition fails
