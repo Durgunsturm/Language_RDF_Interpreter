@@ -45,6 +45,7 @@ tokens :-
     "." { \p s -> TokenLineEnd p }
     \? $alpha [$alpha $digit]* { \p s -> TokenVar p s }
     "<" [^ \>]+ ">" { \p s -> TokenURI p s }
+    \" [^\"]+ \" { \p s -> TokenStr p s }
 
 -- Haskell data types    
 {
@@ -82,6 +83,7 @@ data Token = TokenSelect AlexPosn
            | TokenLineEnd AlexPosn
            | TokenVar AlexPosn String
            | TokenURI AlexPosn String
+           | TokenStr AlexPosn String
            deriving (Eq, Show)
 
 tokenPosn :: Token -> AlexPosn
@@ -120,4 +122,5 @@ tokenPosn t = case t of
     TokenLineEnd p -> p
     TokenVar p _ -> p
     TokenURI p _ -> p
+    TokenStr p _ -> p
 }

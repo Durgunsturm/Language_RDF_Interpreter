@@ -36,6 +36,7 @@ import Tokens
     '.'                 { TokenLineEnd _ }
     var                 { TokenVar _ $$ }
     uri                 { TokenURI _ $$ }
+    str                 { TokenStr _ $$ }
 
 %right '!'
 %left "||"
@@ -60,6 +61,7 @@ SingleQuery     : SelectClause FromClause ToClause WhereClause      { Selector $
 
 ConditionVal    : uri                                               { UriCond $1 }
                 | int                                               { IntCond $1 }
+                | str                                               { StrCond $1 }
 
 VarList         : var                                               { [$1] }
                 | VarList var                                       { $1 ++ [$2] }
@@ -97,6 +99,7 @@ showPosn (AlexPn _ line col) = show line ++ ":" ++ show col
 
 data ConditionVal               = UriCond String
                                 | IntCond Int
+                                | StrCond String
                                 deriving Show
 
 type Var                        = String
