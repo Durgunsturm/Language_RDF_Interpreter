@@ -48,38 +48,54 @@ import Tokens
 Exp             : Expr                                              { [$1] }
                 | Expr Exp                                          { $1 : $2 }
 
-Expr            : SingleQuery                                       { Sing $1 }
-                | '(' Expr UNION Expr ')'                           { Union $2 $4 }
-                | '(' Expr GROUP Expr ')'                           { Group $2 $4 }
-                | '(' Expr INTER Expr ')'                           { Inter $2 $4 }
-                | '(' Expr DIFF Expr ')'                            { Diff $2 $4 }
-                | var '=' ConditionVal '.'                          { Variable $1 $3 }
+Expr            : Query                                             { Queries $1 }
+                | var '=' RDFTerm '.'                               { Variable $1 $3 }
                 | var '=' NORM var '.'                              { Norm $1 $4 $4 }
                 | var '=' NORM var var '.'                          { Norm $1 $4 $5 }
 
-SingleQuery     : SelectClause FromClause ToClause WhereClause      { Selector $1 $2 $3 $4 }
+Query           : SelectClause FromClause ToClause WhereClause      { Select $1 $2 $3 $4 }
+                | '(' Query UNION Query ')'                         { Union $2 $4 }
+                | '(' Query GROUP Query ')'                         { Group $2 $4 }
+                | '(' Query INTER Query ')'                         { Inter $2 $4 }
+                | '(' Query DIFF Query ')'                          { Diff $2 $4 }
 
-ConditionVal    : uri                                               { UriCond $1 }
-                | int                                               { IntCond $1 }
-                | str                                               { StrCond $1 }
 
+-- Handles graph reference if declared, ignores it otherwise
+GraphRef        : in var                                            { (Just $2) }
+                |                                                   { Nothing }
+
+Operand         : var GraphRef                                      { Var $1 $2 }
+                | RDFTerm                                           { Const $1 }
+
+RDFTerm         : uri                                               { URI $1 }
+                | int                                               { LitInt $1 }
+                | str                                               { LitStr $1 }
+
+
+-- Handles variables separated by spaces or commas (and a mix of them technically)
 VarList         : var                                               { [$1] }
-                | VarList var                                       { $1 ++ [$2] }
+                | var VarList                                       { $1 : $2 }
+                | var ',' VarList                                   { $1 : $3 }
 
-ConditionClause : '!' ConditionClause                               { Not $2 }
-                | '(' ConditionClause ')'                           { $2 }
-                | ConditionClause "&&" ConditionClause              { And $1 $3 }
-                | ConditionClause "||" ConditionClause              { Or $1 $3 }
-                | var '=' ConditionVal                              { Eq $1 $3 }
-                | var '<' ConditionVal                              { Lt $1 $3 }
-                | var '>' ConditionVal                              { Gt $1 $3 }
-                | var "<=" ConditionVal                             { LtEq $1 $3 }
-                | var ">=" ConditionVal                             { GtEq $1 $3 }
+Condition       : '!' Condition                                     { Not $2 }
+                | '(' Condition ')'                                 { $2 }
+                | Condition "&&" Condition                          { And $1 $3 }
+                | Condition "||" Condition                          { Or $1 $3 }
+                | Operand '=' Operand                               { Eq $1 $3 }
+                | Operand '<' Operand                               { Lt $1 $3 }
+                | Operand '>' Operand                               { Gt $1 $3 }
+                | Operand "<=" Operand                              { LtEq $1 $3 }
+                | Operand ">=" Operand                              { GtEq $1 $3 }
+                | MAX var GraphRef                                  { Max $2 $3 }
+                | MIN var GraphRef                                  { Min $2 $3 }
 
-ConditionLine   : ConditionClause '.'                               { $1 }
+ConditionLine   : Condition '.'                                     { $1 }
 
 Conditions      : ConditionLine                                     { [$1] }
-                | Conditions ConditionLine                          { $1 ++ [$2] }
+                | ConditionLine Conditions                          { $1 : $2 }
+
+
+{- Handles query syntax -}
 
 WhereClause     : WHERE '{' Conditions '}'                          { $3 }
 
@@ -97,46 +113,63 @@ parseError (t:ts) = error ("Parse error at line:column " ++ showPosn (tokenPosn 
 showPosn :: AlexPosn -> String
 showPosn (AlexPn _ line col) = show line ++ ":" ++ show col
 
-data ConditionVal               = UriCond String
-                                | IntCond Int
-                                | StrCond String
+-- Optional reference to a specific graph
+type GraphRef                   = Maybe String
+
+-- Operand used as comparators in conditions
+data Operand                    = Var String GraphRef
+                                | Const RDFTerm 
                                 deriving Show
 
-type Var                        = String
+-- Terms that hold values
+data RDFTerm                    = URI String
+                                | LitInt Int
+                                | LitStr String
+                                deriving Show
 
+-- List of strings holding variable names
+type Var                        = String
 type VarList                    = [Var]
 
-data ConditionClause            = Not ConditionClause
-                                | And ConditionClause ConditionClause
-                                | Or ConditionClause ConditionClause
-                                | Eq Var ConditionVal
-                                | Lt Var ConditionVal
-                                | Gt Var ConditionVal
-                                | LtEq Var ConditionVal
-                                | GtEq Var ConditionVal
+data Condition                  = Not Condition
+                                | And Condition Condition
+                                | Or Condition Condition
+                                | Eq Operand Operand
+                                | Lt Operand Operand
+                                | Gt Operand Operand
+                                | LtEq Operand Operand
+                                | GtEq Operand Operand
+                                | Max String GraphRef
+                                | Min String GraphRef
                                 deriving Show
 
-type ConditionLine              = ConditionClause
+-- Type to separate conditions by line
+type ConditionLine              = Condition
+-- List of all conditions within a single where clause
 type Conditions                 = [ConditionLine]
 
 
+{- Parts a single query -}
+
 type WhereClause                = Conditions
 
-type ToClause                   = [String]
+type ToClause                   = VarList
 
-type FromClause                 = [String]
+type FromClause                 = VarList
 
-type SelectClause               = [String]
+type SelectClause               = VarList
 
-data SingleQuery                = Selector SelectClause FromClause ToClause WhereClause
+-- Handles a complex query with a single output
+data Query                      = Select SelectClause FromClause ToClause WhereClause
+                                | Union Query Query
+                                | Group Query Query
+                                | Inter Query Query
+                                | Diff Query Query
                                 deriving Show
 
-data Expr                       = Sing SingleQuery
-                                | Union Expr Expr
-                                | Group Expr Expr
-                                | Inter Expr Expr
-                                | Diff Expr Expr
-                                | Variable String ConditionVal
+-- Top level statements in code
+data Expr                       = Queries Query
+                                | Variable String RDFTerm
                                 | Norm String String String
                                 deriving Show
 
