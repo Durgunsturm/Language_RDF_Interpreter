@@ -3,18 +3,18 @@
 ?g = init ?g1 ?g2 .
 
 ( 
-SELECT (?s ?p ?obj) FROM (?g) TO (?out) WHERE {
-    ?p = <http://example.org/ont/hasAge> .
-    ( ?obj > 21 ) || ( ?obj < 24 ) .
+SELECT (?s ?p ?obj) FROM (?g) WHERE {
+    ?p = !<http://example.org/ont/hasAge> .
+    ( ?obj < 21 ) || ( ?obj > 24 ) .
 }
 UNION
 SELECT (?s ?p ?obj) FROM (?g) TO (?out) WHERE {
-    ?p = <http://example.org/ont/hasAge> .
+    ?p = !<http://example.org/ont/hasAge> .
     ( ?obj > 21 ) || ( ?obj < 24 ) .
 }
 )
 
 SELECT (?s ?p ?obj) FROM (?g1, ?g2) TO (?out) WHERE {
-    ?p in ?g1 = <http://example.org/ont/hasAge> .
+    ?p in ?g1 = !<http://example.org/ont/hasAge> .
     MAX ?obj .
 }

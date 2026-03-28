@@ -16,9 +16,9 @@ main' = do
     case args of 
         (fileName : _ ) -> do
             sourceText <- readFile fileName
-            putStrLn ("Parsing : " ++ sourceText)
+            putStrLn ("Parsing : " ++ sourceText ++ "\n")
             let tokens = alexScanTokens sourceText
-            --putStrLn ("Lexed as " ++ show tokens)
+            --putStrLn ("Lexed as " ++ show tokens ++ "\n")
             let parsedProg = parseCalc tokens
             putStrLn ("Parsed as " ++ show parsedProg)
         [] -> do

@@ -10,7 +10,7 @@ SELECT (?s ?p ?obj) FROM (?g) TO (?out) WHERE {
 
 //Explicit input graphs and implicit output (writes to first input file)
 SELECT (?s ?p ?obj) FROM (?g1, ?g2) WHERE {
-    ?p in ?g1 = <http://example.org/ont/hasAge> .
+    ?p in ?g1 = !<http://example.org/ont/hasAge> .
     ?obj >= 21 .
 }
 
@@ -18,18 +18,18 @@ SELECT (?s ?p ?obj) FROM (?g1, ?g2) WHERE {
 (
         (
             SELECT (?s ?p ?obj) FROM (?g1, ?g2) WHERE {
-                ?p in ?g1 = <http://example.org/ont/hasAge> .
+                ?p in ?g1 = !<http://example.org/ont/hasAge> .
                 ?obj >= 21 .
             }
         UNION
             SELECT (?s ?p ?obj) FROM (?g1, ?g2) WHERE {
-                ?p in ?g1 = <http://example.org/ont/hasAge> .
+                ?p in ?g1 = !<http://example.org/ont/hasAge> .
                 ?obj >= 21 .
             }
         )
     DIFF
         SELECT (?s ?p ?obj) FROM (?g1, ?g2) WHERE {
-            ?p in ?g1 = <http://example.org/ont/hasAge> .
+            ?p in ?g1 = !<http://example.org/ont/hasAge> .
             ?obj >= 21 .
         }
 )

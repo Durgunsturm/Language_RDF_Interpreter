@@ -54,6 +54,7 @@ Expr            : Query                                             { Queries $1
                 | var '=' NORM var var '.'                          { Norm $1 $4 $5 }
 
 Query           : SelectClause FromClause ToClause WhereClause      { Select $1 $2 $3 $4 }
+                | SelectClause FromClause WhereClause               { Select $1 $2 $2 $3 } -- Output graph equal to input
                 | '(' Query UNION Query ')'                         { Union $2 $4 }
                 | '(' Query GROUP Query ')'                         { Group $2 $4 }
                 | '(' Query INTER Query ')'                         { Inter $2 $4 }
