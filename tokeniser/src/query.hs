@@ -1,5 +1,9 @@
 --Queries normalised turtle files
-module Main where
+module Query (
+	parseRDF,
+	unparseRDF,
+	executeQuery
+) where
 import Data.Maybe (mapMaybe)
 import Data.Char (isDigit)
 import Data.List (nub,intersect)
