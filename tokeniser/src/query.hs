@@ -7,37 +7,25 @@ module Query (
 import Data.Maybe (mapMaybe)
 import Data.Char (isDigit)
 import Data.List (nub,intersect)
+import Grammar
 
 type Dataset = [(String, [Triple])] -- List of graph names and associated triples (parsed from input graphs)
-data RDFTerm = 
-	URI String  -- value in triple of the form <uri_text>
-	| LitInt Int -- value in triple which is an integer
-	| LitStr String -- value in triple which is a string
-	deriving (Show, Eq, Ord)
-type GraphRef = Maybe String -- part of the 'in' syntax defining the specific graph a variable is referencing (Just "graph_name" or Nothing)
 type Triple = (RDFTerm, RDFTerm, RDFTerm) -- parsed version of the RDF graphs stored in a datatype that allows for easy manipulation in condition matching
 type Binding = [(String, RDFTerm)] -- list of variable name ("?s", "?p", "?o", "?graph1.?s", etc...) and associated RDFTerm
-data Query = 
-	Select [String] [String] [Condition] -- [input variables] [graph variables] [query conditions]
-	| Union Query Query -- union is applied to two query clauses, concatenating the output of the two associated queries
-	| Intersection Query Query -- intersection is applied to two query clauses, finding the intersection of the output of the two associated queries
-	deriving Show
-data Operand = 
-	Var String GraphRef -- variables used in the WHERE clause of the form "?variable_name" Maybe "?graph_name" (from lines such as ?p in ?g1 = ...)
-	| Const RDFTerm -- constant values used in the WHERE clause which can be either a string, integer or URI value
-	deriving Show 
-data Condition = 
-	Eq Operand Operand -- equality operator '='
-	| Not Operand Operand -- inequality operator '!='
-	| Gt Operand Operand  -- greater than operator '>'
-	| Lt Operand Operand -- less than operator '<'
-	| Gte Operand Operand -- greater than or equal to operator '>='
-	| Lte Operand Operand -- less than or equal to operator '<='
-	| Max String GraphRef -- MAX statement in WHERE clause, finds the triples containing the maximum value associated with the input variable (applied after all other conditions have already been filtered)
-	| Min String GraphRef -- MIN statement in WHERE clause, finds the triples containing the minimum value associated with the input variable (applied after all other conditions have already been filtered)
-	| And Condition Condition -- AND statement, filters triples such that returned triples must match all conditions in both 'branches' of the statement
-	| Or Condition Condition -- OR statement filters triples such that returned triples must match condition of (at least) one of the 'branches' of the statement
-	deriving Show
+instance Eq RDFTerm where
+	(URI u1) == (URI u2) = u1 == u2
+	(LitInt i1) == (LitInt i2) = i1 == i2
+	(LitStr s1) == (LitStr s2) = s1 == s2
+	_ == _ = False
+
+instance Ord RDFTerm where
+	compare (LitInt i1) (LitInt i2) = compare i1 i2
+	compare (LitStr s1) (LitStr s2) = compare s1 s2
+	comapre (URI u1) (URI u2) = comapre u1 u2
+	compare (LitInt _) _ = LT
+	compare _ (LitInt _) = GT
+	compare (LitStr _) _ = LT
+	compare _ (LitStr _) = GT
 
 -- separates line into 3 strings: subject, predicate, object
 tokenise :: String -> [String]
@@ -110,12 +98,9 @@ evalOperand (Var var gRef) env = lookupVar (resolveVar var gRef) env
 evalCondition :: Condition -> [Binding] -> Binding -> Bool
 evalCondition (Eq op1 op2) _ env = -- equality condition
 	case (evalOperand op1 env, evalOperand op2 env) of
-		(Just val1, Just val2) -> val == val2 -- true only when values are equal
+		(Just val1, Just val2) -> val1 == val2 -- true only when values are equal
 		_ -> False -- otherwise condition fails
-evalCondition (Not op1 op2) _ env =
-	case (evalOperand op1 env, evalOperand op2 env) of
-		(Just val1, Just val2) -> val /= val2 -- true only when values are not equal
-		_ -> False -- otherwise condition fails
+
 evalCondition (Gt op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
 		(Just (LitInt i1), Just (LitInt i2)) -> i1 > i2 -- values are integers and i1 > i2
@@ -124,11 +109,11 @@ evalCondition (Lt op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
 		(Just (LitInt i1), Just (LitInt i2)) -> i1 < i2 -- values are integers and i1 < i2
 		_ -> False -- otherwise condition fails
-evalCondition (Gte op1 op2) _ env =
+evalCondition (GtEq op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
 		(Just (LitInt i1), Just (LitInt i2)) -> i1 >= i2 -- values are integers and i1 >= i2
 		_ -> False -- otherwise condition fails
-evalCondition (Lte op1 op2) _ env =
+evalCondition (LtEq op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
 		(Just (LitInt i1), Just (LitInt i2)) -> i1 <= i2 -- values are integers and i1 <= i2
 		_ -> False -- otherwise condition fails
@@ -152,6 +137,8 @@ evalCondition (Min var gRef) allEnvs env = -- same logic as maximise, just repla
 	in case lookupVar resolvedVar env of
 		Just val -> not (null sameGroupVals) && val == minimum sameGroupVals -- minimum can fetch more than one valid triple, assuming those triples don't match on at least one other aspect (e.g. minimise object, if subject in two min triples is different output both triples)
 		Nothing -> False -- otherwise condition fails
+evalCondition (Not c) allEnvs env =
+	not (evalCondition c allEnvs env)
 evalCondition (And c1 c2) allEnvs env =
 	evalCondition c1 allEnvs env && evalCondition c2 allEnvs env -- evaluate conditions of left and right 'branches'
 evalCondition (Or c1 c2) allEnvs env =
@@ -177,7 +164,7 @@ bindingToTriple _ _ = Nothing -- otherwise return nothing
 
 -- takes parsed program and RDF graph and then filters contents of RDF graph against conditions in program 
 executeQuery :: Query -> Dataset -> [Triple]
-executeQuery (Select vars fromGraphs cons) ds =
+executeQuery (Select vars fromGraphs _ cons) ds =
 	let
 		-- creates bindings for triple, primary graph is implicit
 		bindTriple :: String -> Bool -> Triple -> Binding
@@ -222,7 +209,8 @@ executeQuery (Intersection q1 q2) ds =
 		results1 = executeQuery q1 ds
 		results2 = executeQuery q2 ds
 	in intersect results1 results2 -- return intersection of executed query on both branches of INTERSECTION
-		
+executeQuery (Group _ _) _ = []
+executeQuery (Diff _ _) _ = []	
 
 -- for testing, predefines generic content for RDF document, converts that String into list of Triple objects, predefines generic query in parsed format, runs executeQuery on predefined program and parsed triples, then outputs results as an unparsed string
 main :: IO ()
