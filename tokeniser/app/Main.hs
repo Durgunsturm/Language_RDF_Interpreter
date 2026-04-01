@@ -56,7 +56,7 @@ extractPath (LitInt _) = ""
 loadDataset :: Env -> IO [(String,[a])]
 loadDataset [] = return [] -- base case
 loadDataset ((var, path):xs) = do
-    let normPath = path ++ ".norm" -- define normalised file path
+    let normPath = "norm" ++ path -- create normalised file path
     normalise path normPath -- normalise contents of path into normPath
     rdfData <- readFile normPath -- read contents of normPath into rdfData
     let triples = parseRDF rdfData -- parse normalised RDF graph into required data type
@@ -70,7 +70,7 @@ processQueries (Queries q : xs) env dataset = do
         resultTriples = executeQuery q dataset -- execute query against dataset
         resultStr = unparseRDF resultTriples -- unparse query result into string using unparseRDF
         (fromVars, toVars) = getFromTo q -- get from file path and to file path
-        isConsoleOutput = fromVars == toVars || null toVars -- check whether to write to console or to file
+        isConsoleOutput = null toVars -- check whether to write to console or to file
     if isConsoleOutput then do -- write to console
         putStrLn "Query Result:"
         puStrLn resultStr
