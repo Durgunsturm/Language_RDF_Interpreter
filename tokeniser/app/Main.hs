@@ -21,7 +21,7 @@ main' = do
             sourceText <- readFile fileName
             putStrLn ("Parsing : " ++ sourceText ++ "\n")
             let tokens = alexScanTokens sourceText
-            putStrLn ("Lexed as " ++ show tokens ++ "\n")
+            -- putStrLn ("Lexed as " ++ show tokens ++ "\n")
             let parsedProg = parseCalc tokens
             putStrLn ("Parsed as " ++ show parsedProg)
             runProgram parsedProg -- run program
@@ -73,7 +73,7 @@ processQueries (Queries q : xs) env dataset = do
         isConsoleOutput = null toVars -- check whether to write to console or to file
     if isConsoleOutput then do -- write to console
         putStrLn "Query Result:"
-        puStrLn resultStr
+        putStrLn resultStr
     else do -- write to to file
         let outVar = head toVars -- first file path in toVars
         case lookup outVar env of
