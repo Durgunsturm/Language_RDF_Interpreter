@@ -73,7 +73,7 @@ processQueries (Queries q : xs) env dataset = do
         isConsoleOutput = null toVars -- check whether to write to console or to file
     if isConsoleOutput then do -- write to console
         putStrLn "Query Result:"
-        puStrLn resultStr
+        putStrLn resultStr
     else do -- write to to file
         let outVar = head toVars -- first file path in toVars
         case lookup outVar env of
