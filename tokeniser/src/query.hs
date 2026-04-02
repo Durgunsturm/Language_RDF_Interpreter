@@ -21,7 +21,7 @@ instance Eq RDFTerm where
 instance Ord RDFTerm where
 	compare (LitInt i1) (LitInt i2) = compare i1 i2
 	compare (LitStr s1) (LitStr s2) = compare s1 s2
-	comapre (URI u1) (URI u2) = comapre u1 u2
+	compare (URI u1) (URI u2) = compare u1 u2
 	compare (LitInt _) _ = LT
 	compare _ (LitInt _) = GT
 	compare (LitStr _) _ = LT
@@ -204,7 +204,7 @@ executeQuery (Union q1 q2) ds =
 		results1 = executeQuery q1 ds
 		results2 = executeQuery q2 ds
 	in nub (results1 ++ results2) -- return concatenation of executed query on both branches of UNION
-executeQuery (Intersection q1 q2) ds =
+executeQuery (Inter q1 q2) ds =
 	let
 		results1 = executeQuery q1 ds
 		results2 = executeQuery q2 ds
@@ -213,64 +213,64 @@ executeQuery (Group _ _) _ = []
 executeQuery (Diff _ _) _ = []	
 
 -- for testing, predefines generic content for RDF document, converts that String into list of Triple objects, predefines generic query in parsed format, runs executeQuery on predefined program and parsed triples, then outputs results as an unparsed string
-main :: IO ()
-main = 
-    do
+--main :: IO ()
+--main = 
+--    do
 		-- output task name then unparsed string of the result of calling executeQuery on specified query and provided dataset (graph reference, list of triples)
-        putStrLn "Task 1 results:"
-        putStr (unparseRDF (executeQuery query1 dataset1))
-        putStrLn "\nTask 2 results:"
-        putStr (unparseRDF (executeQuery query2 dataset2))
-        putStrLn "\nTask 3 results:"
-        putStr (unparseRDF (executeQuery query3 dataset3))
-		putStrLn "\nTask 4 results:"
-		putStr (unparseRDF (executeQuery query4 dataset4))
-		putStrLn "\nTask 5 results:"
-		putStr (unparseRDF (executeQuery query5 dataset5))
+--        putStrLn "Task 1 results:"
+--        putStr (unparseRDF (executeQuery query1 dataset1))
+--        putStrLn "\nTask 2 results:"
+--        putStr (unparseRDF (executeQuery query2 dataset2))
+--        putStrLn "\nTask 3 results:"
+--        putStr (unparseRDF (executeQuery query3 dataset3))
+--		putStrLn "\nTask 4 results:"
+--		putStr (unparseRDF (executeQuery query4 dataset4))
+--		putStrLn "\nTask 5 results:"
+--		putStr (unparseRDF (executeQuery query5 dataset5))
 	
-    where 
+--    where 
         -- Task 1
 		-- generic RDF graph
-	    rdfDataG11 = "<http://example.org/alice> <http://example.org/ont/name> \"Alice\" .\n<http://example.org/alice> <http://example.org/ont/worksFor> <http://example.org/uos> .\n<http://example.org/bob> <http://example.org/ont/name> \"Bob\" ."
-	    triplesG11 = parseRDF rdfDataG11
+--	    rdfDataG11 = "<http://example.org/alice> <http://example.org/ont/name> \"Alice\" .\n<http://example.org/alice> <http://example.org/ont/worksFor> <http://example.org/uos> .\n<http://example.org/bob> <http://example.org/ont/name> \"Bob\" ."
+--	    triplesG11 = parseRDF rdfDataG11
 	    -- generic RDF graph
-		rdfDataG12 = "<http://example.org/charlie> <http://example.org/ont/name> \"Charlie\" .\n<http://example.org/charlie> <http://example.org/ont/studiesAt> <http://example.org/uos> .\n<http://example.org/dave> <http://example.org/ont/name> \"Dave\" ."
-	    triplesG12 = parseRDF rdfDataG12
-	    dataset1 = [("?g1",triplesG11),("?g2",triplesG12)]
+--		rdfDataG12 = "<http://example.org/charlie> <http://example.org/ont/name> \"Charlie\" .\n<http://example.org/charlie> <http://example.org/ont/studiesAt> <http://example.org/uos> .\n<http://example.org/dave> <http://example.org/ont/name> \"Dave\" ."
+--	    triplesG12 = parseRDF rdfDataG12
+--	    dataset1 = [("?g1",triplesG11),("?g2",triplesG12)]
 		-- output the union of two graphs, leaving conditions on triples empty
-	    query1 = Union (Select ["?s","?p","?o"] ["?g1"] []) (Select ["?s","?p","?o"] ["?g2"] [])
+--	    query1 = Union (Select ["?s","?p","?o"] ["?g1"] []) (Select ["?s","?p","?o"] ["?g2"] [])
 
 	    -- Task 2
 		-- generic RDF graph
-	    rdfData2 = "<http://example.org/alice> <http://example.org/ont/hasAge> 25 .\n<http://example.org/bob> <http://example.org/ont/hasAge> 19 .\n<http://example.org/charlie> <http://example.org/ont/hasAge> 30 .\n<http://example.org/dave> <http://example.org/ont/name> \"Dave\" ."
-	    triples2 = parseRDF rdfData2
-	    dataset2 = [("?g",triples2)]
+--	    rdfData2 = "<http://example.org/alice> <http://example.org/ont/hasAge> 25 .\n<http://example.org/bob> <http://example.org/ont/hasAge> 19 .\n<http://example.org/charlie> <http://example.org/ont/hasAge> 30 .\n<http://example.org/dave> <http://example.org/ont/name> \"Dave\" ."
+--	    triples2 = parseRDF rdfData2
+--	    dataset2 = [("?g",triples2)]
 		-- output all triples where predicate = <specified_uri> and object is <= specified_int
-	    query2 = Select ["?s","?p","?o"] ["?g"] [Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/hasAge")), Gte (Var "?o" Nothing) (Const (LitInt 21))]
+--	    query2 = Select ["?s","?p","?o"] ["?g"] [Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/hasAge")), Gte (Var "?o" Nothing) (Const (LitInt 21))]
 	
 	    -- Task 3
 		-- generic RDF graph
-	    rdfData3 = "<http://example.org/alice> <http://example.org/ont/studiesAt> <http://example.org/uos> .\n<http://example.org/bob> <http://example.org/ont/worksFor> <http://example.org/uos> .\n<http://example.org/charlie> <http://example.org/ont/studiesAt> <http://example.org/oxford> .\n<http://example.org/dave> <http://example.org/ont/worksFor> <http://example.org/google> .\n<http://example.org/eve> <http://example.org/ont/name> \"Eve\" ."
-	    triples3 = parseRDF rdfData3
-	    dataset3 = [("?g",triples3)]
+--	    rdfData3 = "<http://example.org/alice> <http://example.org/ont/studiesAt> <http://example.org/uos> .\n<http://example.org/bob> <http://example.org/ont/worksFor> <http://example.org/uos> .\n<http://example.org/charlie> <http://example.org/ont/studiesAt> <http://example.org/oxford> .\n<http://example.org/dave> <http://example.org/ont/worksFor> <http://example.org/google> .\n<http://example.org/eve> <http://example.org/ont/name> \"Eve\" ."
+--	    triples3 = parseRDF rdfData3
+--	    dataset3 = [("?g",triples3)]
 		-- output all triples where predicate is one of two URIs and object is a specified URI
-	    query3 = Select ["?s","?p","?o"] ["?g"] [And (Or (Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/studiesAt"))) (Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/worksFor")))) (Eq (Var "?o" Nothing) (Const (URI "http://example.org/uos")))]
+--	    query3 = Select ["?s","?p","?o"] ["?g"] [And (Or (Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/studiesAt"))) (Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/worksFor")))) (Eq (Var "?o" Nothing) (Const (URI "http://example.org/uos")))]
 
 		-- Task 4
 		-- generic RDF graph
-		rdfData4 = "<http://example.org/alice> <http://example.org/ont/price> 100 .\n<http://example.org/alice> <http://example.org/ont/price> 200 .\n<http://example.org/bob> <http://example.org/ont/price> 50 .\n<http://example.org/bob> <http://example.org/ont/price> 150 .\n<http://example.org/charlie> <http://example.org/ont/name> \"Charlie\" ."
-		triples4 = parseRDF rdfData4
-		dataset4 = [("?quux",triples4)]
+--		rdfData4 = "<http://example.org/alice> <http://example.org/ont/price> 100 .\n<http://example.org/alice> <http://example.org/ont/price> 200 .\n<http://example.org/bob> <http://example.org/ont/price> 50 .\n<http://example.org/bob> <http://example.org/ont/price> 150 .\n<http://example.org/charlie> <http://example.org/ont/name> \"Charlie\" ."
+--		triples4 = parseRDF rdfData4
+--		dataset4 = [("?quux",triples4)]
 		-- output all triples where predicate is a specified URI, maximising the object
-		query4 = Select ["?s","?p","?o"] ["?quux"] [Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/price")), Max "?o" Nothing]
+--		query4 = Select ["?s","?p","?o"] ["?quux"] [Eq (Var "?p" Nothing) (Const (URI "http://example.org/ont/price")), Max "?o" Nothing]
 
 		-- Task 5
 		-- generic RDF graph for xyzzy
-		rdfDataG51 = "<http://example.org/res1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/classA> .\n<http://example.org/res2> <http://example.org/ont/other> <http://example.org/classB> ."
-		triplesG51 = parseRDF rdfDataG51
+--		rdfDataG51 = "<http://example.org/res1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/classA> .\n<http://example.org/res2> <http://example.org/ont/other> <http://example.org/classB> ."
+--		triplesG51 = parseRDF rdfDataG51
 		-- generic RDF graph for plugh
-		rdfDataG52 = "<http://example.org/classA> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://example.org/classC> ."
-		triplesG52 = parseRDF rdfDataG52
-		dataset5 = [("?xyzzy",triplesG51),("?plugh",triplesG52)]
+--		rdfDataG52 = "<http://example.org/classA> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://example.org/classC> ."
+--		triplesG52 = parseRDF rdfDataG52
+--		dataset5 = [("?xyzzy",triplesG51),("?plugh",triplesG52)]
 		-- construct triples containing the subject and predicate of triples in g1 and the object of triples in g2 where: predicates in g1 are a specified URI, predicates in g2 are a specified URI, and the object in a triple in g1 matches the subject in a triple in g2
-		query5 = Select ["?s","?p","?plugh.?o"] ["?xyzzy","?plugh"] [And (Eq (Var "?p" Nothing) (Const (URI "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"))) (And (Eq (Var "?p" (Just "?plugh")) (Const (URI "http://www.w3.org/2000/01/rdf-schema#subClassOf"))) (Eq (Var "?o" Nothing) (Var "?s" (Just "?plugh"))))]
+--		query5 = Select ["?s","?p","?plugh.?o"] ["?xyzzy","?plugh"] [And (Eq (Var "?p" Nothing) (Const (URI "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"))) (And (Eq (Var "?p" (Just "?plugh")) (Const (URI "http://www.w3.org/2000/01/rdf-schema#subClassOf"))) (Eq (Var "?o" Nothing) (Var "?s" (Just "?plugh"))))]
