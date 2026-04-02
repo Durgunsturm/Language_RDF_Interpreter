@@ -45,7 +45,7 @@ tokens :-
     "." { \p s -> TokenLineEnd p }
     \? $alpha [$alpha $digit]* { \p s -> TokenVar p s }
     \" [^\"]+ \" { \p s -> TokenStr p (init (tail s)) } -- Removes encasing quotes from string literal
-    "!<" [^ \<\>]+ ">" { \p s -> TokenURI p (tail s) } -- Removes the leading ! from the URI
+    "^<" [^ \<\>]+ ">" { \p s -> TokenURI p (tail s) } -- Removes the leading ! from the URI
 
 
 -- Haskell data types    
