@@ -29,6 +29,8 @@ library
       Grammar
       Tokens
   other-modules:
+      Normalise
+      Query
       Paths_tokeniser
   autogen-modules:
       Paths_tokeniser
