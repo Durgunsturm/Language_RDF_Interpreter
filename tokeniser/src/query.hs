@@ -2,7 +2,10 @@
 module Query (
 	parseRDF,
 	unparseRDF,
-	executeQuery
+	executeQuery,
+	Dataset,
+	Triple,
+	Binding
 ) where
 import Data.Maybe (mapMaybe)
 import Data.Char (isDigit)
