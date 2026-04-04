@@ -53,7 +53,7 @@ extractPath (URI s) = s
 extractPath (LitInt _) = ""
 
 -- normalise RDF graphs in dataset
-loadDataset :: Env -> IO [(String,[a])]
+loadDataset :: Env -> IO [(String,[Triple])]
 loadDataset [] = return [] -- base case
 loadDataset ((var, path):xs) = do
     let normPath = "norm" ++ path -- create normalised file path
@@ -63,7 +63,7 @@ loadDataset ((var, path):xs) = do
     rest <- loadDataset xs -- recursively act on rest of list
     return ((var, triples) : rest) -- return list of tuples containing a variable name and associated list of triples
 
-processQueries :: [Expr] -> Env -> [(String, b)] -> IO ()
+processQueries :: [Expr] -> Env -> Dataset -> IO ()
 processQueries [] _ _ = return () -- base case
 processQueries (Queries q : xs) env dataset = do
     let
