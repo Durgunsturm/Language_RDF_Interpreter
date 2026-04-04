@@ -15,6 +15,6 @@ SELECT (?s ?p ?obj) FROM (?g) TO (?out) WHERE {
 )
 
 SELECT (?s ?p ?obj) FROM (?g1, ?g2) TO (?out) WHERE {
-    ?p in ?g1 = !<http://example.org/ont/hasAge> .
+    ?p in ?g1 = ^<http://example.org/ont/hasAge> .
     MAX ?obj .
 }
