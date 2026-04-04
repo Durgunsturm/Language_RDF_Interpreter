@@ -17,6 +17,8 @@ import Tokens
     DIFF                { TokenDiff _ }
     MAX                 { TokenMax _ }
     MIN                 { TokenMin _ }
+    AVG                 { TokenAvg _ }
+    SUM                 { TokenSum _ }
     NORM                { TokenNorm _ }
     ','                 { TokenComma _ }
     int                 { TokenNumber _ $$ }
@@ -53,7 +55,7 @@ Expr            : Query                                             { Queries $1
                 | var '=' NORM var '.'                              { Norm $1 $4 $4 }
                 | var '=' NORM var var '.'                          { Norm $1 $4 $5 }
 
-Query           : SelectClause FromClause ToClause WhereClause      { Select $1 $2 $3 $4 }
+Query           : SelectClause FromClause ToClause WhereClause      { Select $1 $2 (Just $3) $4 }
                 | SelectClause FromClause WhereClause               { Select $1 $2 Nothing $3 } -- Output to console
                 | '(' Query UNION Query ')'                         { Union $2 $4 }
                 | '(' Query GROUP Query ')'                         { Group $2 $4 }
@@ -89,6 +91,8 @@ Condition       : '!' Condition                                     { Not $2 }
                 | Operand ">=" Operand                              { GtEq $1 $3 }
                 | MAX var GraphRef                                  { Max $2 $3 }
                 | MIN var GraphRef                                  { Min $2 $3 }
+                | AVG var GraphRef                                  { Avg $2 $3 }
+                | SUM var GraphRef                                  { Sum $2 $3 }
 
 ConditionLine   : Condition '.'                                     { $1 }
 
@@ -142,6 +146,8 @@ data Condition                  = Not Condition
                                 | GtEq Operand Operand
                                 | Max String GraphRef
                                 | Min String GraphRef
+                                | Avg String GraphRef
+                                | Sum String GraphRef
                                 deriving Show
 
 -- Type to separate conditions by line
@@ -154,14 +160,14 @@ type Conditions                 = [ConditionLine]
 
 type WhereClause                = Conditions
 
-type ToClause                   = Maybe VarList
+type ToClause                   = VarList
 
 type FromClause                 = VarList
 
 type SelectClause               = VarList
 
 -- Handles a complex query with a single output
-data Query                      = Select SelectClause FromClause ToClause WhereClause
+data Query                      = Select SelectClause FromClause (Maybe ToClause) WhereClause
                                 | Union Query Query
                                 | Group Query Query
                                 | Inter Query Query
