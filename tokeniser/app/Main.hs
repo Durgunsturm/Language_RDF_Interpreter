@@ -56,7 +56,7 @@ extractPath (LitInt _) = ""
 loadDataset :: Env -> IO [(String,[Triple])]
 loadDataset [] = return [] -- base case
 loadDataset ((var, path):xs) = do
-    let normPath = "norm" ++ path -- create normalised file path
+    let normPath = ("norm" ++ path) -- create normalised file path
     normalise path normPath -- normalise contents of path into normPath
     rdfData <- readFile normPath -- read contents of normPath into rdfData
     let triples = parseRDF rdfData -- parse normalised RDF graph into required data type
@@ -70,25 +70,30 @@ processQueries (Queries q : xs) env dataset = do
         resultTriples = executeQuery q dataset -- execute query against dataset
         resultStr = unparseRDF resultTriples -- unparse query result into string using unparseRDF
         (fromVars, toVars) = getFromTo q -- get from file path and to file path
-        isConsoleOutput = null toVars -- check whether to write to console or to file
+        isConsoleOutput = case toVars of
+            Just toVar -> False
+            Nothing -> True
     if isConsoleOutput then do -- write to console
         putStrLn "Query Result:"
         putStrLn resultStr
     else do -- write to to file
-        let outVar = head toVars -- first file path in toVars
+        let outVar = case toVars of
+                Just vars -> head vars -- filepath
+                Nothing -> "" -- shouldn't ever occur as Nothing toVars already handled in isConsoleOutput
         case lookup outVar env of
             Just outPath -> do -- output path exists, write to output path
                 writeFile outPath resultStr
-                putStrLn $ "Query Result written to: " ++ outPath
+                putStrLn ("Query Result written to: " ++ outPath)
             Nothing -> do -- else write to console and tell user failed to write to file
-                putStrLn $ "Failed to write to: " ++ outVar ++ "Printing to console:"
+                putStrLn ("Failed to write to: " ++ outVar ++ "Printing to console:")
                 putStrLn resultStr
     processQueries xs env dataset
 processQueries (_:xs) env dataset = processQueries xs env dataset -- if expression isn't a query, recursively call on list of expressions
 
 -- get from file path and to file path, only Select statements contain file paths
-getFromTo :: Query -> ([String], [String])
-getFromTo (Select _ from to _) = (from, to)
+getFromTo :: Query -> ([String], Maybe [String])
+getFromTo (Select _ from (Just to) _) = (from, Just to)
+getFromTo (Select _ from Nothing _) = (from, Nothing)
 getFromTo (Union q1 _) = getFromTo q1
 getFromTo (Group q1 _) = getFromTo q1
 getFromTo (Inter q1 _) = getFromTo q1
