@@ -36,7 +36,7 @@ noParse e = do let err =  show e
 runProgram :: [Expr] -> IO()
 runProgram exprs = do
     let env = buildEnv exprs -- build environment from expressions
-    dataset <- loadDataset env -- create dataset from environment
+    dataset <- loadDataset exprs env -- create dataset from environment
     processQueries exprs env dataset -- process queries
 
 buildEnv :: [Expr] -> Env
@@ -49,23 +49,32 @@ buildEnv (_:xs) = buildEnv xs -- skip expressions that aren't variables
 -- convert file path from RDFTerm into string which can be read
 extractPath :: RDFTerm -> String
 extractPath (LitStr s) = s
-extractPath (URI s) = s
+extractPath (URI _) = ""
 extractPath (LitInt _) = ""
 
 -- normalise RDF graphs in dataset
-loadDataset :: Env -> IO [(String,[Triple])]
-loadDataset [] = return [] -- base case
-loadDataset ((var, path):xs) = do
-    let normPath = ("norm" ++ path) -- create normalised file path
-    normalise path normPath -- normalise contents of path into normPath
-    rdfData <- readFile normPath -- read contents of normPath into rdfData
-    let triples = parseRDF rdfData -- parse normalised RDF graph into required data type
-    rest <- loadDataset xs -- recursively act on rest of list
-    return ((var, triples) : rest) -- return list of tuples containing a variable name and associated list of triples
+loadDataset :: [Expr] -> Env -> IO [(String,[Triple])]
+loadDataset [] _ = return [] -- base case
+loadDataset (Norm targetVar inVar outVar : xs) env = do
+    case (lookup inVar env, lookup outVar env) of
+        (Just inPath, Just outPath) -> do -- if input file path and output file path in environment
+            normalise inPath outPath -- normalie input into output
+            rdfData <- readFile outPath -- read normalised file contents
+            let triples = parseRDF rdfData -- convert string into triples data type
+            rest <- loadDataset xs env -- repeat on rest of Query
+            return ((targetVar, triples) : rest) -- return list of target variable and associated triples as dataset for executeQuery
+        _ -> error ("Undefined variable in Norm command: missing assignment for " ++ inVar ++ " or " ++ outVar)
+loadDataset (_ : xs) env = loadDataset xs env -- for all elements of Query that aren't (Norm target in out)
 
 processQueries :: [Expr] -> Env -> Dataset -> IO ()
 processQueries [] _ _ = return () -- base case
 processQueries (Queries q : xs) env dataset = do
+    -- for testing
+    putStrLn "Dataset contents:"
+    print dataset
+    putStrLn "Queries:"
+    print q
+    -- main code
     let
         resultTriples = executeQuery q dataset -- execute query against dataset
         resultStr = unparseRDF resultTriples -- unparse query result into string using unparseRDF
