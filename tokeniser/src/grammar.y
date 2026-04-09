@@ -55,8 +55,10 @@ Expr            : Query                                             { Queries $1
                 | var '=' NORM var '.'                              { Norm $1 $4 $4 }
                 | var '=' NORM var var '.'                          { Norm $1 $4 $5 }
 
-Query           : SelectClause FromClause ToClause WhereClause      { Select $1 $2 (Just $3) $4 }
-                | SelectClause FromClause WhereClause               { Select $1 $2 Nothing $3 } -- Output to console
+Query           : SelectClause FromClause ToClause WhereClause      { Select $1 $2 (Just $3) (Just $4) }
+                | SelectClause FromClause WhereClause               { Select $1 $2 Nothing (Just $3) } -- Output to console
+                | SelectClause FromClause ToClause                  { Select $1 $2 (Just $3) Nothing } -- No where clause
+                | SelectClause FromClause                          { Select $1 $2 Nothing Nothing }
                 | '(' Query UNION Query ')'                         { Union $2 $4 }
                 | '(' Query GROUP Query ')'                         { Group $2 $4 }
                 | '(' Query INTER Query ')'                         { Inter $2 $4 }
@@ -167,7 +169,7 @@ type FromClause                 = VarList
 type SelectClause               = VarList
 
 -- Handles a complex query with a single output
-data Query                      = Select SelectClause FromClause (Maybe ToClause) WhereClause
+data Query                      = Select SelectClause FromClause (Maybe ToClause) (Maybe WhereClause)
                                 | Union Query Query
                                 | Group Query Query
                                 | Inter Query Query
