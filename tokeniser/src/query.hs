@@ -216,7 +216,39 @@ bindingToTriple _ _ = Nothing -- otherwise return nothing
 
 -- takes parsed program and RDF graph and then filters contents of RDF graph against conditions defined in program 
 executeQuery :: Query -> Dataset -> [Triple]
-executeQuery (Select vars fromGraphs _ cons) ds =
+executeQuery (Select vars fromGraphs _ Nothing) ds = -- case where WHERE clause doesn't exist
+	let
+		-- creates bindings for triple, primary graph is implicit
+		bindTriple :: String -> Bool -> Triple -> Binding
+		bindTriple gName isPrimary (s,p,o) =
+			let 
+				-- combines graph name with variable name when graph is explicitly specified
+				explicitBinds = [(gName ++ ".?s",s), (gName ++ ".?p",p), (gName ++ ".?o",o)]
+				implicitBinds = if isPrimary  -- only leaves bindings in first graph passed implicit
+								then [("?s",s),("?p",p),("?o",o)] 
+								else []
+			in explicitBinds ++ implicitBinds -- return all bindings (explicit and implicit)
+
+		-- extract specified graphs from dataset
+		graphsData = [(g,ts) | g <- fromGraphs, Just ts <- [lookup g ds]]
+
+		-- build list of bindings for each graph
+		buildGraphBindings :: [(String, [Triple])] -> [[Binding]]
+		buildGraphBindings [] = [] -- base case
+		buildGraphBindings ((g1, ts1):rest) = -- concatenate bound triples of primary graph to bound triples of the rest of the graphs
+			map (bindTriple g1 True) ts1 : map (\(g,ts) -> map (bindTriple g False) ts) rest
+		
+		-- cartesian product of bindings across all queried graphs
+		combinations = sequence (buildGraphBindings graphsData)
+
+		initialBindings = map concat combinations
+
+		-- evaluate and project
+		filteredBindings = applyConditions [] initialBindings
+		projectedBindings = map (project vars) filteredBindings
+		triples = mapMaybe (bindingToTriple vars) projectedBindings
+	in nub triples -- return result with removal of repeated triples
+executeQuery (Select vars fromGraphs _ (Just cons)) ds = -- case where WHERE clause does exist
 	let
 		-- creates bindings for triple, primary graph is implicit
 		bindTriple :: String -> Bool -> Triple -> Binding
