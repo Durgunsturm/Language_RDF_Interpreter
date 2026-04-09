@@ -100,7 +100,6 @@ evalCondition (Eq op1 op2) _ env = -- equality condition
 	case (evalOperand op1 env, evalOperand op2 env) of
 		(Just val1, Just val2) -> val1 == val2 -- true only when values are equal
 		_ -> False -- otherwise condition fails
-
 evalCondition (Gt op1 op2) _ env =
 	case (evalOperand op1 env, evalOperand op2 env) of
 		(Just (LitInt i1), Just (LitInt i2)) -> i1 > i2 -- values are integers and i1 > i2
@@ -143,10 +142,64 @@ evalCondition (And c1 c2) allEnvs env =
 	evalCondition c1 allEnvs env && evalCondition c2 allEnvs env -- evaluate conditions of left and right 'branches', performing AND on result
 evalCondition (Or c1 c2) allEnvs env =
 	evalCondition c1 allEnvs env || evalCondition c2 allEnvs env -- evaluate conditions of left and right 'branches', performing OR on result
+evalCondition _ _ _ = False -- default to False, should never be matched against
 
--- apply condition sequentially to execute filters before aggregate functions
+-- apply condition sequentially to execute filters
 applyConditions :: [Condition] -> [Binding] -> [Binding]
-applyConditions cons initialEnvs = foldl (\envs cond -> filter (evalCondition cond envs) envs) initialEnvs cons
+applyConditions cons initialEnvs = foldl applySingle initialEnvs cons
+	where
+		applySingle envs cond = case cond of -- Average and Sum manipulate values, so have to be handled sepparately to filters applied in evalCondition
+			Avg var gRef -> computeAverage var gRef envs -- returns list of variables, creating triple containing average value in target variable for each triple group
+			Sum var gRef -> computeSum var gRef envs -- returns list of variable, creating triple containing sum value in target variable for each triple in group
+			_ -> filter (evalCondition cond envs) envs -- conditions that filter triples, rather than operate on values in triples
+
+computeAverage :: String -> GraphRef -> [Binding] -> [Binding]
+computeAverage var gRef envs =
+	let
+		resolvedVar = resolveVar var gRef -- same resolved variable + grouping logic as in Max and Min
+		isTargetVar k = k == var || dropWhile (/= '.') k == "." ++ var
+		getGroupKey env = filter (\(k,_) -> not (isTargetVar k)) env
+		
+		-- produces list of lists, each containing group of triples which individually need to be averaged
+		grouped = groupBy (\e1 e2 -> getGroupKey e1 == getGroupKey e2) $ sortBy (\e1 e2 -> compare (getGroupKey e1) (getGroupKey e2)) envs
+
+		-- takes list of bindings (group) and calculates average across that group, return a single triple
+		processGroup :: [Binding] -> [Binding]
+		processGroup [] = [] -- base case
+		processGroup group = -- non empty group
+			let
+				firstEnv = head group
+				groupKey = getGroupKey firstEnv
+				intVals = [i | e <- group, Just (LitInt i) <- [lookup resolvedVar e]] -- check to ensure variable being average is an integer
+			in 
+				if null intVals
+				then [] -- when variable being averaged isn't an integer
+				else
+					let avg = sum intVals `div` length intVals -- calcualte average of group
+					in [[(resolvedVar, LitInt avg)] ++ groupKey] -- concatenate average binding with rest of variables in group key
+	in concatMap processGroup grouped -- map process group across all groups in grouped and concatenate result
+
+computeSum :: String -> GraphRef -> [Binding] -> [Binding]
+computeSum var gRef envs =
+	let -- same logic as computeAverage, bar division in processGroup else clause
+		resolvedVar = resolveVar var gRef
+		isTargetVar k = k == var || dropWhile (/= '.') k == "." ++ var
+		getGroupKey env = filter (\(k,_) -> not (isTargetVar k)) env
+
+		grouped = groupBy (\e1 e2 -> getGroupKey e1 == getGroupKey e2) $ sortBy (\e1 e2 -> compare (getGroupKey e1) (getGroupKey e2)) envs
+
+		processGroup :: [Binding] -> [Binding]
+		processGroup [] = []
+		processGroup group =
+			let
+				firstEnv = head group
+				groupKey = getGroupKey firstEnv
+				intVals = [i | e <- group, Just (LitInt i) <- [lookup resolvedVar e]]
+			in 
+				if null intVals
+				then []
+				else [[(resolvedVar, LitInt (sum intVals))] ++ groupKey] -- no need to divide sum by length of intVals as average isn't being calculated
+	in concatMap processGroup grouped
 
 -- project only variables requested in SELECT clause
 project :: [String] -> Binding -> Binding
@@ -169,11 +222,8 @@ executeQuery (Select vars fromGraphs _ cons) ds =
 		bindTriple :: String -> Bool -> Triple -> Binding
 		bindTriple gName isPrimary (s,p,o) =
 			let 
-				explicitBinds = [ -- combines graph name with variable name when graph is explicitly specified
-								(gName ++ ".?s",s)
-								, (gName ++ ".?p",p)
-								, (gName ++ ".?o",o)
-								]
+				-- combines graph name with variable name when graph is explicitly specified
+				explicitBinds = [(gName ++ ".?s",s), (gName ++ ".?p",p), (gName ++ ".?o",o)]
 				implicitBinds = if isPrimary  -- only leaves bindings in first graph passed implicit
 								then [("?s",s),("?p",p),("?o",o)] 
 								else []
