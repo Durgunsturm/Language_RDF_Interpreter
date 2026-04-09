@@ -176,7 +176,7 @@ computeAverage var gRef envs =
 				then [] -- when variable being averaged isn't an integer
 				else
 					let avg = sum intVals `div` length intVals -- calcualte average of group
-					in [(resolvedVar, LitInt avg)] ++ groupKey -- concatenate average binding with rest of variables in group key
+					in [[(resolvedVar, LitInt avg)] ++ groupKey] -- concatenate average binding with rest of variables in group key
 	in concatMap processGroup grouped -- map process group across all groups in grouped and concatenate result
 
 computeSum :: String -> GraphRef -> [Binding] -> [Binding]
@@ -189,8 +189,8 @@ computeSum var gRef envs =
 		grouped = groupBy (\e1 e2 -> getGroupKey e1 == getGroupKey e2) $ sortBy (\e1 e2 -> compare (getGroupKey e1) (getGroupKey e2)) envs
 
 		processGroup :: [Binding] -> [Binding]
-		processgroup [] = []
-		processgroup group =
+		processGroup [] = []
+		processGroup group =
 			let
 				firstEnv = head group
 				groupKey = getGroupKey firstEnv
@@ -198,7 +198,7 @@ computeSum var gRef envs =
 			in 
 				if null intVals
 				then []
-				else [(resolvedVar, LitInt (sum intVals))] ++ groupKey -- no need to divide sum by length of intVals as average isn't being calculated
+				else [[(resolvedVar, LitInt (sum intVals))] ++ groupKey] -- no need to divide sum by length of intVals as average isn't being calculated
 	in concatMap processGroup grouped
 
 -- project only variables requested in SELECT clause
