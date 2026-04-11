@@ -122,20 +122,22 @@ evalCondition (Max var gRef) allEnvs env =
 		isTargetVar k = k == var || dropWhile (/= '.') k == "." ++ var  -- target variable boolean
 		groupingKey = filter (\(k, _) -> not (isTargetVar k)) env -- filter triples in binding to only match against target variable
 		matchesGroup key targetEnv = all (\(k, v) -> lookup k targetEnv == Just v) key
-		sameGroupVals = [val | e <- allEnvs, matchesGroup groupingKey e, Just val <- [lookup resolvedVar e]] 
+		group = [e | e <- allEnvs, matchesGroup groupingKey e] 
+		intVals = [i | e <- group, Just (LitInt i) <- [lookup resolvedVar e]] -- check to ensure variable being maximised is an integer
 	in case lookup resolvedVar env of
-		Just val -> not (null sameGroupVals) && val == maximum sameGroupVals -- maximum can fetch more than one valid triple, assuming those triples don't match on at least one other aspect (e.g. maximise object, if subject in two max triples is different output both triples)
-		Nothing -> False -- otherwise condition fails
+		Just (LitInt val) -> not (null intVals) && val == maximum intVals -- maximum can fetch more than one valid triple, assuming those triples don't match on at least one other aspect (e.g. maximise object, if subject in two max triples is different output both triples)
+		_ -> False -- otherwise condition fails
 evalCondition (Min var gRef) allEnvs env = -- same logic as maximise, just replace Just val condition in return with minimum instead of maximum
 	let
 		resolvedVar = resolveVar var gRef
 		isTargetVar k = k == var || dropWhile (/= '.') k == "." ++ var
 		groupingKey = filter (\(k, _) -> not (isTargetVar k)) env
 		matchesGroup key targetEnv = all (\(k, v) -> lookup k targetEnv == Just v) key
-		sameGroupVals = [val | e <- allEnvs, matchesGroup groupingKey e, Just val <- [lookup resolvedVar e]]
+		group = [e | e <- allEnvs, matchesGroup groupingKey e]
+		intVals = [i | e <- group, Just (LitInt i) <- [lookup resolvedVar e]]
 	in case lookup resolvedVar env of
-		Just val -> not (null sameGroupVals) && val == minimum sameGroupVals -- minimum can fetch more than one valid triple, assuming those triples don't match on at least one other aspect (e.g. minimise object, if subject in two min triples is different output both triples)
-		Nothing -> False -- otherwise condition fails
+		Just (LitInt val) -> not (null intVals) && val == minimum intVals -- minimum can fetch more than one valid triple, assuming those triples don't match on at least one other aspect (e.g. minimise object, if subject in two min triples is different output both triples)
+		_ -> False -- otherwise condition fails
 evalCondition (Not c) allEnvs env =
 	not (evalCondition c allEnvs env) -- negate result of evaluated conditions inside NOT operation
 evalCondition (And c1 c2) allEnvs env =
