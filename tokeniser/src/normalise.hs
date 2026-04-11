@@ -94,7 +94,9 @@ parseBase = do
 parsePrefix :: Parser TTLine
 parsePrefix = do
   string "prefix"
-  name <- parseSection True -- Reads name of prefix, which must have no spaces
+  spaces
+  name <- many (noneOf ": \t") -- Reads name of prefix stopping at space or colon
+  spaces
   char ':'
   uri <- parseSection False
   char '.'
@@ -196,10 +198,14 @@ parseLine = do
   try parseBaseOrPrefix <|> try parseTriple
 
 --Hands one line into the parser
+--handleLine :: String -> TTLine
+--handleLine "" = Empty
+--handleLine xs = case parse (parseLine <* eof) "" xs of
+--  Left _ -> error "Parsing failed"
+--  Right x -> x
 handleLine :: String -> TTLine
-handleLine "" = Empty
-handleLine xs = case parse (parseLine <* eof) "" xs of
-  Left _ -> error "Parsing failed"
+handleLine xs = case parse (spaces *> (try parseLine <|> return Empty) <* spaces <* eof) "" xs of
+  Left err -> error ("Parsing failed on line: " ++ show xs ++ "\nParsec Error: " ++ show err)
   Right x -> x
 
 -- Init --
