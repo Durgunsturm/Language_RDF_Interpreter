@@ -19,11 +19,11 @@ main' = do
     case args of 
         (fileName : _ ) -> do
             sourceText <- readFile fileName
-            putStrLn ("Parsing : " ++ sourceText ++ "\n")
+            -- putStrLn ("Parsing : " ++ sourceText ++ "\n")
             let tokens = alexScanTokens sourceText
             -- putStrLn ("Lexed as " ++ show tokens ++ "\n")
             let parsedProg = parseCalc tokens
-            putStrLn ("Parsed as " ++ show parsedProg)
+            -- putStrLn ("Parsed as " ++ show parsedProg)
             runProgram parsedProg -- run program
         [] -> do
             putStrLn "Error: No input file provided."
@@ -70,10 +70,10 @@ processQueries :: [Expr] -> Env -> Dataset -> IO ()
 processQueries [] _ _ = return () -- base case
 processQueries (Queries q : xs) env dataset = do -- Expressions matching Query pattern
     -- for testing
-    putStrLn "Dataset contents:"
-    print dataset
-    putStrLn "Queries:"
-    print q
+    -- putStrLn "Dataset contents:"
+    -- print dataset
+    -- putStrLn "Queries:"
+    -- print q
     -- main code
     let
         resultTriples = executeQuery q dataset -- execute query against dataset
@@ -83,7 +83,7 @@ processQueries (Queries q : xs) env dataset = do -- Expressions matching Query p
             Just toVar -> False -- case when TO clause not included in program
             Nothing -> True -- case when TO clause included in program
     if isConsoleOutput then do -- write to console
-        putStrLn "Query Result:"
+        -- putStrLn "Query Result:"
         putStrLn resultStr
     else do -- write to file
         let outVar = case toVars of -- extract head of toVars into outVar (removing this and instead using 'outVar = head toVars' causes a syntax error)
