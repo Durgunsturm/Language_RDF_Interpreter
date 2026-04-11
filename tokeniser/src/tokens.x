@@ -43,7 +43,7 @@ tokens :-
     "{" { \p s -> TokenLCurly p }
     "}" { \p s -> TokenRCurly p }
     "." { \p s -> TokenLineEnd p }
-    \? $alpha [$alpha $digit]* { \p s -> TokenVar p s }
+    \? $alpha [$alpha $digit]* (\. \? $alpha [$alpha $digit]*)* { \p s -> TokenVar p s }
     \" [^\"]+ \" { \p s -> TokenStr p (init (tail s)) } -- Removes encasing quotes from string literal
     "^<" [^ \<\>]+ ">" { \p s -> TokenURI p (tail (init (tail s))) } -- Removes the leading ! from the URI
 
