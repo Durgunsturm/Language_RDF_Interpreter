@@ -1,0 +1,7 @@
+?g1 = "quux.ttl" .
+?g2 = "normQuux.ttl" .
+?quux = init ?g1 ?g2 .
+SELECT (?s, ?p, ?o) FROM (?quux) WHERE {
+	?p = ^<http://example.org/ont/price> .
+	MAX ?o .
+}

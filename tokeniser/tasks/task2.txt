@@ -1,0 +1,7 @@
+?g1 = "baz.ttl" .
+?g2 = "normBaz.ttl" .
+?baz = init ?g1 ?g2 .
+SELECT (?s, ?p, ?o) FROM (?baz) WHERE {
+	?p = ^<http://example.org/ont/hasAge> .
+	?o >= 21 .
+}
