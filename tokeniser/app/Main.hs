@@ -8,6 +8,7 @@ import Query
 import System.Environment
 import Control.Exception
 import System.IO
+import Data.List (sort)
 
 type Env = [(String, String)]
 
@@ -77,7 +78,7 @@ processQueries (Queries q : xs) env dataset = do -- Expressions matching Query p
     -- main code
     let
         resultTriples = executeQuery q dataset -- execute query against dataset
-        resultStr = unparseRDF resultTriples -- unparse query result into string using unparseRDF
+        resultStr = unparse resultTriples -- sort triples and unparse into single string
         (fromVars, toVars) = getFromTo q -- get from file path and to file path
         isConsoleOutput = case toVars of
             Just toVar -> False -- case when TO clause not included in program
@@ -108,3 +109,14 @@ getFromTo (Union q1 _) = getFromTo q1
 getFromTo (Group q1 _) = getFromTo q1
 getFromTo (Inter q1 _) = getFromTo q1
 getFromTo (Diff q1 _) = getFromTo q1
+
+unparseTerm :: RDFTerm -> String
+unparseTerm (URI u) = "<" ++ u ++ ">"
+unparseTerm (LitStr s) = "\"" ++ s ++ "\""
+unparseTerm (LitInt i) = show i
+
+unparseTriple :: Triple -> String
+unparseTriple (s, p, o) = unparseTerm s ++ " " ++ unparseTerm p ++ " " ++ unparseTerm o ++ " ."
+
+unparse :: [Triple] -> String
+unparse = unlines . map unparseTriple . sort

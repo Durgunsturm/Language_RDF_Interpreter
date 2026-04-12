@@ -1,7 +1,6 @@
 --Queries normalised turtle files
 module Query (
 	parseRDF,
-	unparseRDF,
 	executeQuery,
 	Dataset,
 	Triple,
@@ -22,14 +21,14 @@ instance Eq RDFTerm where -- define equality for RDFTerm datatype
 	(LitStr s1) == (LitStr s2) = s1 == s2
 	_ == _ = False
 
-instance Ord RDFTerm where -- define order for RDFTerm datatype
-	compare (LitInt i1) (LitInt i2) = compare i1 i2
-	compare (LitStr s1) (LitStr s2) = compare s1 s2
-	compare (URI u1) (URI u2) = compare u1 u2
-	compare (LitInt _) _ = LT
-	compare _ (LitInt _) = GT
-	compare (LitStr _) _ = LT
-	compare _ (LitStr _) = GT
+instance Ord RDFTerm where
+    compare (LitStr s1) (LitStr s2) = compare s1 s2
+    compare (LitStr _) _ = LT
+    compare _ (LitStr _) = GT
+    compare (LitInt i1) (LitInt i2) = compare i1 i2
+    compare (LitInt _) _ = LT
+    compare _ (LitInt _) = GT
+    compare (URI u1) (URI u2) = compare u1 u2
 
 -- separates line into 3 strings: subject, predicate, object
 tokenise :: String -> [String]
@@ -68,21 +67,6 @@ parseLine line =
 -- parses each line individually, using Haskell 'lines' function to separate on '\n' characters in doc
 parseRDF :: String -> [Triple]
 parseRDF doc = mapMaybe parseLine (lines doc) -- parse lines of RDF graph into [Triple]
-
--- converts RDFTerm into string
-unparseTerm :: RDFTerm -> String
-unparseTerm (URI u) = "<" ++ u ++ ">" -- covnert URI to String
-unparseTerm (LitInt i) = show i -- convert Int to String
-unparseTerm (LitStr s) = "\"" ++ s ++ "\"" -- add \" to ensure '"' is viewed as a character in string
-
--- combines individual Triple into single string
-unparseTriple :: Triple -> String
-unparseTriple (s, p, o) =
-	unparseTerm s ++ " " ++ unparseTerm p ++ " " ++ unparseTerm o ++ " ."
-
--- unparses all triples and then combines them using unlines to insert '\n' between triple strings
-unparseRDF :: [Triple] -> String
-unparseRDF triples = unlines (map unparseTriple triples)
 
 -- resolve variable name based on explicity/implicit graph scopes
 resolveVar :: String -> GraphRef -> String
