@@ -1,5 +1,5 @@
-?g1 = "normInput.ttl" .
-?g2 = "normOutput.ttl" .
+?g1 = "src/normTest/normInput.ttl" .
+?g2 = "src/normTest/normOutput.ttl" .
 ?g = init ?g1 ?g2 .
 
 ( 

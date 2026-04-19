@@ -1,16 +1,16 @@
 @base <http://example.org/> .
-@prefix ont : <http://ont.example.org/> .
-@prefix me : <http://me.example.org/> .
+@prefix ont: <http://ont.example.org/> .
+@prefix me: <http://me.example.org/> .
 <nmg> ont:teaches <comp2312> , <comp2322> ; ont:worksFor <uos> .
 <ech> me:teaches <comp1312> , <comp1100> , "Other Subjects" ; ont:more <place> , "new place" ; me:places "location" .
 
 @base <http://mybase.org/> .
-@prefix net : <http://net.mybase.org/> .
-@prefix ple : <http://ple.mybase.org/> .
-@prefix qed : <http://qed.mybase.org/> .
+@prefix net: <http://net.mybase.org/> .
+@prefix ple: <http://ple.mybase.org/> .
+@prefix qed: <http://qed.mybase.org/> .
 <pme> ple:path1 <obj1> , <obj2> , <obj3> , "Misc Objects" ; net:out "More Objects" , <netObj> .
 <http://mybase.org/met> <http://qed/mybase.org/sat> <http://mybase.org/pow> .
 <met> qed:olk <nev> ; ple:gho "test" .
 
-@prefix ted : <http://ted.mybase.org/> .
+@prefix ted: <http://ted.mybase.org/> .
 <led> ted:yut <lot> .
