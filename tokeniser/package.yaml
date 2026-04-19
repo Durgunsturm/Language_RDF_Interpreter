@@ -46,7 +46,7 @@ library:
       happy:happy
 
 executables:
-  tokeniser-exe:
+  tokeniser:
     main:        Main.hs
     source-dirs: app
     ghc-options:
