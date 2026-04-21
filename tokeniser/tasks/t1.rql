@@ -1,0 +1,11 @@
+?g1 = "foo.ttl" .
+?g2 = "normFoo.ttl" .
+?g3 = "bar.ttl" .
+?g4 = "normBar.ttl" .
+?foo =  init ?g1 ?g2 .
+?bar = init ?g3 ?g4 .
+(
+ SELECT (?s, ?p, ?o) FROM (?foo)
+ UNION
+ SELECT (?s, ?p, ?o) FROM (?bar)
+)
