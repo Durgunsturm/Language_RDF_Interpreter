@@ -1,7 +1,0 @@
-?g1 = "qux.ttl" .
-?g2 = "normQux.ttl" .
-?qux = init ?g1 ?g2 .
-SELECT (?s, ?p, ?o) FROM (?qux) WHERE {
-	?o = ^<http://example.org/uos> .
-	?p = ^<http://example.org/ont/studiesAt> || ?p = ^<http://example.org/ont/worksFor> .
-}
