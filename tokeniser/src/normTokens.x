@@ -11,14 +11,14 @@ $alpha = [a-zA-Z]
 tokens :-
   $white+               ; 
   "--".*                ; 
-  @base                 { \p s -> TokenBase p} 
-  @prefix               { \p s -> TokenPrefix p }
+  "@base"               { \p s -> TokenBase p} 
+  "@prefix"             { \p s -> TokenPrefix p }
   "<" [^ \<\>]+ ">"     { \p s -> TokenURI p s }
   [^ \.\:\,]+           { \p s -> TokenVal p s }
-  .                     { \p s -> TokenDot p }
-  :                     { \p s -> TokenColon p }
-  ,                     { \p s -> TokenComma p }
-  ;                     { \p s -> TokenSemi p }
+  ":"                   { \p s -> TokenColon p }
+  ","                   { \p s -> TokenComma p }
+  ";"                   { \p s -> TokenSemi p }
+  "."                   { \p s -> TokenDot p }
 
 { 
 -- Each action has type :: AlexPosn -> String -> Token 

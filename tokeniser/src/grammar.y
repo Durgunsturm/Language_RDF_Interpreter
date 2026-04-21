@@ -17,6 +17,7 @@ import Tokens
     DIFF                { TokenDiff _ }
     MAX                 { TokenMax _ }
     MIN                 { TokenMin _ }
+    COUNT               { TokenCount _ }
     AVG                 { TokenAvg _ }
     SUM                 { TokenSum _ }
     NORM                { TokenNorm _ }
@@ -93,6 +94,7 @@ Condition       : '!' Condition                                     { Not $2 }
                 | Operand ">=" Operand                              { GtEq $1 $3 }
                 | MAX var GraphRef                                  { Max $2 $3 }
                 | MIN var GraphRef                                  { Min $2 $3 }
+                | COUNT var GraphRef                                { Count $2 $3 }
                 | AVG var GraphRef                                  { Avg $2 $3 }
                 | SUM var GraphRef                                  { Sum $2 $3 }
 
@@ -148,6 +150,7 @@ data Condition                  = Not Condition
                                 | GtEq Operand Operand
                                 | Max String GraphRef
                                 | Min String GraphRef
+                                | Count String GraphRef
                                 | Avg String GraphRef
                                 | Sum String GraphRef
                                 deriving Show

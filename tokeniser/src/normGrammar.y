@@ -3,7 +3,7 @@ module NormGrammar where
 import NormTokens
 }
 
-%name parseCalc
+%name parseTTL
 %tokentype { NormToken } 
 %error { parseError }
 %token 
@@ -18,14 +18,42 @@ import NormTokens
 
 %% 
 
-Exp         : TTLine                    { [$1] }
-            | TTLine Exp                { $1 : $2 }
+Exp         : TTLine                                    { [$1] }
+            | TTLine Exp                                { $1 : $2 }
 
-TTLine      : uri uri Obj '.'           { Whole $1 $2 $3 }
-            | base uri '.'              { Base $2 }
-            | prefix val ':' uri '.'    { Prefix $2 $4 }
-            | uri val ':' val Obj ',' Obj ';' val ':' val Obj '.'
+TTLine      : uri uri StringVal '.'                     { Whole $1 $2 $3 }
+            | base uri '.'                              { Ba $2 }
+            | prefix val ':' uri '.'                    { Pre $2 $4 }
+            | uri MatchBase '.'                         { Subj $1 $2 }
 
-Obj         : uri                       { URI $1 }
-            | val                       { Val $1 }
+StringVal   : uri                                       { URI $1 }
+            | val                                       { Val $1 }
 
+MatchPred   : StringVal                                 { [$1] }
+            | StringVal ',' MatchPred                   { $1 : $2 }
+
+MatchBase   : val ':' val MatchPred                     { [( $1, $3, $4 )] }
+            | val ':' val MatchPred ';' MatchBase       { ( $1, $3, $4 ) : $5 }
+
+{ 
+parseError :: [NormToken] -> a
+parseError [] = error "Unknown Parse Error" 
+parseError (t:ts) = error ("Parse error at line:column " ++ (tokenPosn t))
+
+type Exp = [TTLine]
+
+data TTLine = Whole String String StringVal 
+            | Ba String 
+            | Pre String String 
+            | Subj String MatchBase
+            deriving Show
+
+type MatchBase = [(String, String, MatchPred)]
+
+type MatchPred = [StringVal]
+
+data StringVal = URI String 
+         | Val String
+         deriving Show
+
+}
