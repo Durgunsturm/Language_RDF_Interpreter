@@ -46,7 +46,7 @@ library
     alex:alex,
     happy:happy
 
-executable tokeniser-exe
+executable tokeniser
   main-is: Main.hs
   other-modules:
       Paths_tokeniser
