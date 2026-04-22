@@ -133,11 +133,12 @@ evalCondition _ _ _ = False -- default to False, should never be matched against
 -- apply condition sequentially to execute filters
 applyConditions :: [Condition] -> [Binding] -> [Binding]
 applyConditions cons initialEnvs = foldl applySingle initialEnvs cons
-        where
-                applySingle envs cond = case cond of -- Average and Sum manipulate values, so have to be handled sepparately to filters applied in evalCondition
-                        Avg var gRef -> computeAverage var gRef envs -- returns list of variables, creating triple containing average value in target variable for each triple group
-                        Sum var gRef -> computeSum var gRef envs -- returns list of variable, creating triple containing sum value in target variable for each triple in group
-                        _ -> filter (evalCondition cond envs) envs -- conditions that filter triples, rather than operate on values in triples
+        where applySingle envs cond = 
+			case cond of -- Avg, Sum and Count create new triples so have to be handled sepparate to filter-type conditions
+				Avg var gRef -> computeAverage var gRef envs
+				Sum var gRef -> computeSum var gRef envs
+				Count var gRef -> computeCount var gRef envs
+				_ -> filter (evalCondition cond envs) envs -- all other conditions (filter-type conditions)
 
 computeAverage :: String -> GraphRef -> [Binding] -> [Binding]
 computeAverage var gRef envs =
@@ -178,6 +179,24 @@ computeSum var gRef envs =
                                 intVals = [i | e <- group, Just (LitInt i) <- [lookup resolvedVar e]]
                         in ([[(resolvedVar, LitInt (sum intVals))] ++ groupKey | not (null intVals)]) -- no need to divide sum by length of intVals as average isn't being calculated
         in concatMap processGroup grouped
+
+computeCount :: String -> GraphRef -> [Binding] -> [Binding]
+computeCount var gRef envs =
+	let -- same logic as computeAverage, computeSum, just return size of group in processGroup instead
+                resolvedVar = resolveVar var gRef
+                isTargetVar k = k == var || dropWhile (/= '.') k == "." ++ var
+                getGroupKey env = filter (\(k,_) -> not (isTargetVar k)) env
+
+                grouped = groupBy (\e1 e2 -> getGroupKey e1 == getGroupKey e2) $ sortBy (\e1 e2 -> compare (getGroupKey e1) (getGroupKey e2)) envs
+
+                processGroup :: [Binding] -> [Binding]
+                processGroup [] = []
+                processGroup group =
+                        let
+                                firstEnv = head group
+                                groupKey = getGroupKey firstEnv
+                        in ([[(resolvedVar, LitInt (length group))] ++ groupKey]) -- count only returns the size of the group
+        in concatMap processGroup grouped 
 
 -- project only variables requested in SELECT clause
 project :: [String] -> Binding -> Binding
