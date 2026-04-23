@@ -1,0 +1,6 @@
+@base <http://example.org/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<Student> rdfs:subClassOf <Person> .
+<Employee> rdfs:subClassOf <Person> .
+<Person> rdfs:subClassOf <Agent> .

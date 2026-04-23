@@ -1,6 +1,6 @@
-name:       tokeniser
+name:       interpreter
 version:    0.1.0.0
-github:     "githubuser/tokeniser"
+github:     "githubuser/interpreter"
 license:    BSD-3-Clause
 author:     "Author name here"
 maintainer: "example@example.com"
@@ -45,7 +45,7 @@ library:
       happy:happy
 
 executables:
-  tokeniser:
+  interpreter:
     main:        Main.hs
     source-dirs: app
     ghc-options:
@@ -53,7 +53,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - tokeniser
+    - interpreter
 
 tests:
   tokeniser-test:
@@ -64,4 +64,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - tokeniser
+    - interpreter

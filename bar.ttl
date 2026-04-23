@@ -1,0 +1,6 @@
+@base <http://example.org/> .
+@prefix ont: <http://ont.example.org/> .
+
+<alice> ont:name "Alice" .
+<bob> ont:worksFor <uos> .
+<charlie> ont:name "Charlie" .
