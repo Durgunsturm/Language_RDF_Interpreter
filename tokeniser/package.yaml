@@ -35,7 +35,6 @@ ghc-options:
 library:
   source-dirs: src
   exposed-modules:
-    - Lib
     - Grammar
     - Tokens
     - Normalise
