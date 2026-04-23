@@ -19,3 +19,14 @@
 <http://mybase.org/met> <http://ple.mybase.org/gho> "test" .
 
 <http://mybase.org/led> <http://ted.mybase.org/yut> <http://mybase.org/lot> .
+
+<start://base/post1> <start://pre1/base/path1> <start://base/obj1> .
+<start://base/post1> <start://pre1/base/path1> "test" .
+<start://base/post1> <start://pre1/base/path1> 1 .
+<start://base/post2> <start://pre1/base/path2> <start://base/obj2> .
+<start://base/post3> <start://pre2/base/path3> <start://base/obj3> .
+<start://base/post3> <start://pre1/base/path4> <start://base/obj4> .
+<start://base/post3> <start://pre2/base/path5> "test" .
+
+<start2://base2/post1> <start2://pre3/base2/path1> <start2://base2/obj1> .
+<start2://base2/post1> <start2://pre4/base2/path1> <start2://base2/obj1> .

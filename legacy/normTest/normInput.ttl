@@ -14,3 +14,15 @@
 
 @prefix ted: <http://ted.mybase.org/> .
 <led> ted:yut <lot> .
+
+@base <start://base/> .
+@prefix pre1: <start://pre1/base/> .
+<post1> pre1:path1 <obj1> , "test" , 1 .
+<post2> pre1:path2 <obj2> .
+@prefix pre2: <start://pre2/base/> .
+<post3> pre2:path3 <obj3> ; pre1:path4 <obj4> ; pre2:path5 "test" .
+
+@base <start2://base2/> .
+@prefix pre3: <start2://pre3/base2/> .
+@prefix pre4: <start2://pre4/base2/> .
+<post1> pre3:path1 <obj1> ; pre4:path1 <obj1> .
