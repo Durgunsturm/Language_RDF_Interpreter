@@ -87,41 +87,40 @@ data Token = TokenSelect AlexPosn
            | TokenStr AlexPosn String
            deriving (Eq, Show)
 
-tokenPosn :: Token -> AlexPosn
-tokenPosn t = case t of
-    TokenSelect p -> p
-    TokenFrom p -> p
-    TokenWhere p -> p
-    TokenTo p -> p
-    TokenUnion p -> p
-    TokenGroup p -> p
-    TokenInter p -> p
-    TokenDiff p -> p
-    TokenMax p -> p
-    TokenMin p -> p
-    TokenNorm p -> p
-    TokenCount p -> p
-    TokenSum p -> p
-    TokenAvg p -> p
-    TokenSample p -> p
-    TokenGroupConcat p -> p
-    TokenComma p -> p
-    TokenNumber p _ -> p
-    TokenIn p -> p
-    TokenAnd p -> p
-    TokenOr p -> p
-    TokenLessThanOrEquals p -> p
-    TokenGreaterThanOrEquals p -> p
-    TokenNot p -> p
-    TokenEquals p -> p
-    TokenLessThan p -> p
-    TokenGreaterThan p -> p
-    TokenLParentheses p -> p
-    TokenRParentheses p -> p
-    TokenLCurly p -> p
-    TokenRCurly p -> p
-    TokenLineEnd p -> p
-    TokenVar p _ -> p
-    TokenURI p _ -> p
-    TokenStr p _ -> p
+tokenPosn :: Token -> String
+tokenPosn (TokenSelect (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenFrom (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenWhere (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenTo (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenUnion (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenGroup (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenInter (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenDiff (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenMax (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenMin (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenNorm (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenCount (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenSum (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenAvg (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenSample (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenGroupConcat (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenComma (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenNumber (AlexPn a l c) s) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenIn (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenAnd (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenOr (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenLessThanOrEquals (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenGreaterThanOrEquals (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenNot (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenEquals (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenLessThan (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenGreaterThan (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenLParentheses (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenRParentheses (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenLCurly (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenRCurly (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenLineEnd (AlexPn a l c)) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenVar (AlexPn a l c) s) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenURI (AlexPn a l c) s) = show(l) ++ ":" ++ show(c)
+tokenPosn (TokenStr (AlexPn a l c) s) = show(l) ++ ":" ++ show(c)
 }

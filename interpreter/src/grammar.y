@@ -117,10 +117,7 @@ SelectClause    : SELECT '(' VarList ')'                            { $3 }
 { 
 parseError :: [Token] -> a
 parseError [] = error "Unknown Parse Error" 
-parseError (t:ts) = error ("Parse error at line:column " ++ showPosn (tokenPosn t))
-
-showPosn :: AlexPosn -> String
-showPosn (AlexPn _ line col) = show line ++ ":" ++ show col
+parseError (t:ts) = error ("Parse error at line:column " ++ tokenPosn t)
 
 -- Optional reference to a specific graph
 type GraphRef                   = Maybe String
