@@ -1,8 +1,0 @@
-@base <http://example.org/> .
-@prefix ont: <http://example.org/ont/> .
-
-<alice> ont:hasAge 25 .
-<bob> ont:hasAge 20 .
-<charlie> ont:hasAge 21 .
-<dave> ont:hasAge 19 .
-<eve> ont:name "Eve" .
