@@ -1,0 +1,26 @@
+?g1 = "foo.ttl" .
+?g2 = "normFoo1.ttl" .
+?g3 = "normFoo2.ttl" .
+?foo1 = init ?g1 ?g2 .
+?foo2 = init ?g1 ?g3 .
+
+(
+(
+SELECT (?s, ?p, ?foo2.?s) FROM (?foo1, ?foo2) WHERE {
+?p = ^<http://www.w3.org/2002/07/owl#sameAs> .
+?foo2.?p = ^<http://www.w3.org/2002/07/owl#sameAs> .
+?o = ?foo2.?o .
+}
+UNION
+SELECT (?s, ?p, ?foo2.?o) FROM (?foo1, ?foo2) WHERE {
+?p = ^<http://www.w3.org/2002/07/owl#sameAs> .
+?foo2.?p = ^<http://www.w3.org/2002/07/owl#sameAs> .
+?o = ?foo2.?s .
+}
+)
+UNION
+SELECT (?s, ?p, ?o) FROM (?foo1) WHERE {
+?p = ^<http://www.w3.org/2002/07/owl#sameAs> .
+?s = ?o .
+}
+)
