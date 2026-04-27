@@ -1,0 +1,20 @@
+?g1 = "test/baz.ttl" .
+?g2 = "test/normBaz.ttl" .
+?g3 = "test/foo.ttl" .
+?g4 = "test/normFoo.ttl" .
+?g5 = "test/bar.ttl" .
+?g6 = "test/normBar.ttl" .
+
+?gExcluder = init ?g1 ?g2 .
+?g1 = init ?g3 ?g4 .
+?g2 = init ?g5 ?g6 .
+
+(
+    (
+        SELECT (?s, ?p, ?o) FROM (?g1)
+        UNION
+        SELECT (?s, ?p, ?o) FROM (?g2)
+    )
+    DIFF
+    SELECT (?s, ?p, ?o) FROM (?gExcluder)
+)
