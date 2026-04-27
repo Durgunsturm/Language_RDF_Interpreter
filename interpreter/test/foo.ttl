@@ -1,0 +1,4 @@
+@base <http://example.org/> .
+@prefix pre: <http://pre/example.org/> .
+<subj1> pre:path1 obj3 , obj4 .
+<subj2> pre:path1 obj2 .
