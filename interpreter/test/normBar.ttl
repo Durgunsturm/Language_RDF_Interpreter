@@ -1,0 +1,4 @@
+<http://example.org/subj1> <http://pre/example.org/path1> obj1 .
+<http://example.org/subj1> <http://pre/example.org/path1> obj2 .
+<http://example.org/subj1> <http://pre/example.org/path1> obj5 .
+<http://example.org/subj2> <http://pre/example.org/path1> obj1 .

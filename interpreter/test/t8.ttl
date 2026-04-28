@@ -1,0 +1,8 @@
+<subj1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+<subj2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+<subj3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+<subj4> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+
+<subj1> <http://xmlns.com/foaf/0.1/knows> <http://example.org/nmg> .
+<subj3> <http://xmlns.com/foaf/0.1/knows> <http://example.org/nmg> .
+<subj4> <randomPath> <randomObj> .

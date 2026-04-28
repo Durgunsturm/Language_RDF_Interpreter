@@ -1,0 +1,26 @@
+?inp1 = "test/t8.ttl" .
+?inp2 = "test/normFoo1.ttl" .
+?inp3 = "test/normFoo2.ttl" .
+
+?g1 = init ?inp1 ?inp2 .
+?g2 = init ?inp1 ?inp3 .
+
+(
+    SELECT (?s, ?p, ?o) FROM (?g1) WHERE {
+        ?p = ^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+        &&
+        ?o = ^<http://xmlns.com/foaf/0.1/Person> .
+    }
+    DIFF
+    SELECT (?s, ?p, ?o) FROM (?g1, ?g2) WHERE {
+        ?s in ?g1 = ?s in ?g2
+        &&
+        ?p in ?g1 = ^<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> 
+        &&
+        ?o in ?g1 = ^<http://xmlns.com/foaf/0.1/Person>
+        &&
+        ?p in ?g2 = ^<http://xmlns.com/foaf/0.1/knows>
+        &&
+        ?o in ?g2 = ^<http://example.org/nmg> .
+    }
+)
