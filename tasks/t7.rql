@@ -1,5 +1,5 @@
-?inp1 = "test/t7.ttl" .
-?inp2 = "test/normt7.ttl" .
+?inp1 = "foo.ttl" .
+?inp2 = "normFoo.ttl" .
 ?t7graph = init ?inp1 ?inp2 .
 
 SELECT (?s, ?p, ?o) FROM (?t7graph) WHERE {
