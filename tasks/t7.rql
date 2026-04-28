@@ -1,0 +1,15 @@
+?inp1 = "test/t7.ttl" .
+?inp2 = "test/normt7.ttl" .
+?t7graph = init ?inp1 ?inp2 .
+
+SELECT (?s, ?p, ?o) FROM (?t7graph) WHERE {
+    ((?s = ^<http://example.org/jane>) && 
+    (!(?p = ^<http://ont.example.org/hasName>)) && 
+    (!(?o = "Fred" || ?o = "Sally"))) ||
+    ((!(?s = ^<http://example.org/jane>)) && 
+    (?p = ^<http://ont.example.org/hasName>) && 
+    (!(?o = "Fred" || ?o = "Sally"))) ||
+    ((!(?s = ^<http://example.org/jane>)) && 
+    (!(?p = ^<http://ont.example.org/hasName>)) && 
+    (?o = "Fred" || ?o = "Sally")) .
+}

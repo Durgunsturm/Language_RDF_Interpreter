@@ -1,0 +1,8 @@
+@base <http://example.org/> .
+@prefix ont: <http://ont.example.org/> .
+
+<jane> ont:hasAge 25 . 
+<jane> ont:hasName "Jane" .
+<bob> ont:hasName "Fred" .
+<jane> ont:hasName "Fred" .
+<dave> ont:hasAge 30 .
