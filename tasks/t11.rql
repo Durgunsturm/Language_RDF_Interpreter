@@ -1,0 +1,28 @@
+?g1 = "test/t10.ttl" .
+?g2 = "test/normFoo.ttl" .
+
+?w1 = "test/t10-out.ttl" . // File to write new path
+?w2 = "test/norm-t10-out.ttl" . // File to write new path
+
+?g = init ?g1 ?g2 .
+?w = init ?w1 ?w2.
+
+(
+    SELECT (?s, ?p, ?o) FROM (?g) WHERE {
+        ! (
+            ?p = ^<http://purl.org/dc/elements/1.0/creator>
+            ||
+            ?p = ^<http://purl.org/dc/elements/1.1/creator>
+        ) .
+    }
+    UNION
+    SELECT (?s, ?w.?p, ?o) FROM (?g, ?w) WHERE {
+        (
+            ?p in ?g = ^<http://purl.org/dc/elements/1.0/creator>
+            ||
+            ?p in ?g = ^<http://purl.org/dc/elements/1.1/creator>
+        )
+        &&
+        ?p in ?w = ^<http://purl.org/dc/terms/creator> .
+    }
+)
