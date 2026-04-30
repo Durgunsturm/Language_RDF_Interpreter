@@ -4,4 +4,4 @@
 
 @base <http://dc/elements/1.1/> .
 @prefix purl.org: <http://purl.org/dc/elements/1.1/> .
-<subj1> purl.org:creator obj1 .
+<subj1> purl.org:creator obj1 , obj2 ; purl.org:other obj1 .

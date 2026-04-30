@@ -1,3 +1,5 @@
 <http://dc/elements/1.0/subj1> <http://purl.org/dc/elements/1.0/creator> obj1 .
 
 <http://dc/elements/1.1/subj1> <http://purl.org/dc/elements/1.1/creator> obj1 .
+<http://dc/elements/1.1/subj1> <http://purl.org/dc/elements/1.1/creator> obj2 .
+<http://dc/elements/1.1/subj1> <http://purl.org/dc/elements/1.1/other> obj1 .
