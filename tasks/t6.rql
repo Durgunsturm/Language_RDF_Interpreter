@@ -1,9 +1,9 @@
-?g1 = "test/baz.ttl" .
-?g2 = "test/normBaz.ttl" .
-?g3 = "test/foo.ttl" .
-?g4 = "test/normFoo.ttl" .
-?g5 = "test/bar.ttl" .
-?g6 = "test/normBar.ttl" .
+?g1 = "baz.ttl" .
+?g2 = "normBaz.ttl" .
+?g3 = "foo.ttl" .
+?g4 = "normFoo.ttl" .
+?g5 = "bar.ttl" .
+?g6 = "normBar.ttl" .
 
 ?gExcluder = init ?g1 ?g2 .
 ?g1 = init ?g3 ?g4 .

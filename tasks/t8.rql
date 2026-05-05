@@ -1,6 +1,6 @@
-?inp1 = "test/t8.ttl" .
-?inp2 = "test/normFoo1.ttl" .
-?inp3 = "test/normFoo2.ttl" .
+?inp1 = "foo.ttl" .
+?inp2 = "normFoo1.ttl" .
+?inp3 = "normFoo2.ttl" .
 
 ?g1 = init ?inp1 ?inp2 .
 ?g2 = init ?inp1 ?inp3 .
