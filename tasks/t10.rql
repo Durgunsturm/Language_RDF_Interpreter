@@ -1,0 +1,7 @@
+?g1 = "foo.ttl" .
+?g2 = "normFoo.ttl" .
+?foo = init ?g1 ?g2 .
+
+SELECT (?s ?p ?o) FROM (?foo) WHERE {
+	?p = ^<http://purl.org/dc/elements/1.0/creator> || ?p = ^<http://purl.org/dc/elements/1.1/creator> .
+}
