@@ -7,25 +7,25 @@ Downloadable parts of the language are present in the packages folder.
 
 ### Required TTL Format
 
-**Either present as a whole triple such as:**
-<http://example.org/subj> <http://pre.example.org/path> "Val" .
-<http://example.org/subj> <http://pre.example.org/path> <http://example.org/obj> .
+**Either present as a whole triple such as:**  
+<http://example.org/subj> <http://pre.example.org/path> "Val" .  
+<http://example.org/subj> <http://pre.example.org/path> <http://example.org/obj> .  
 
-**Or abbreviated using prefix declarations:**
-@base <http://example.org/> .
-@prefix pre: <http://pre.example.org/> .
-<subj> pre:path "Val" .
-<subj> pre:path <obj> .
+**Or abbreviated using prefix declarations:**  
+@base <http://example.org/> .  
+@prefix pre: <http://pre.example.org/> .  
+<subj> pre:path "Val" .  
+<subj> pre:path <obj> .  
 
-**Further abbreviated with semi-colons if the subject is the same:**
-@base <http://example.org/> .
-@prefix pre: <http://pre.example.org/> .
-<subj> pre:path "Val" ; pre:path <obj> .
+**Further abbreviated with semi-colons if the subject is the same:**  
+@base <http://example.org/> .  
+@prefix pre: <http://pre.example.org/> .  
+<subj> pre:path "Val" ; pre:path <obj> .  
 
-**With final abbreviations with commas if the path is the same:**
-@base <http://example.org/> .
-@prefix pre: <http://pre.example.org/> .
-<subj> pre:path "Val" , <obj> .
+**With final abbreviations with commas if the path is the same:**  
+@base <http://example.org/> .  
+@prefix pre: <http://pre.example.org/> .  
+<subj> pre:path "Val" , <obj> .  
 
 
 ## Executing Source Code
